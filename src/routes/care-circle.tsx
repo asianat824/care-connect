@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   Avatar,
@@ -66,6 +66,12 @@ function CareCirclePage() {
   });
   const [perms, setPerms] = useState<Permission[]>(["View basic care information"]);
   const [updateText, setUpdateText] = useState("");
+  const [stuckOpen, setStuckOpen] = useState<string | null>(null);
+  const [stuckAction, setStuckAction] = useState<string | null>(null);
+  const [showDeclined, setShowDeclined] = useState(false);
+  const [editDetail, setEditDetail] = useState("");
+  const [editInstructions, setEditInstructions] = useState("");
+  const [split, setSplit] = useState<string[]>(["", "", ""]);
 
   const togglePerm = (p: Permission) =>
     setPerms((v) => (v.includes(p) ? v.filter((x) => x !== p) : [...v, p]));
