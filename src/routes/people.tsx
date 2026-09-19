@@ -516,7 +516,7 @@ function PersonDetail({ person }: { person: Person }) {
                 ["together", "Complete this together", `Let ${firstName} answer on this device while you are together.`],
                 ["conversation", `Record what ${firstName} told me`, `Add something ${firstName} shared during a conversation.`],
                 ["observation", "Add my own observation", "Record something you noticed that may help you provide care."],
-              ].map(([value, title, description]) => <button key={value} type="button" onClick={() => setVoiceChoice(value as VoiceChoice)} className="rounded-2xl border border-border bg-background p-4 text-left transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"><span className="block text-lg font-semibold">{title}</span><span className="mt-1 block text-base text-muted-foreground">{description}</span></button>)}
+              ].map(([value, title, description]) => <Button key={value} variant="quiet" onClick={() => setVoiceChoice(value as VoiceChoice)} className="h-auto w-full flex-col items-start rounded-2xl p-4 text-left"><span className="block text-lg font-semibold">{title}</span><span className="mt-1 block whitespace-normal text-base font-normal text-muted-foreground">{description}</span></Button>)}
             </div> : null}
 
             {voiceChoice === "request" ? <div className="mt-6 space-y-5">

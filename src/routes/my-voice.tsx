@@ -41,7 +41,7 @@ const QUESTIONS: { label: string; key: DetailKey }[] = [
 
 function MyVoicePage() {
   const { state, setState } = useStore();
-  const { person, mode } = Route.useSearch();
+  const { person } = Route.useSearch();
   const people = state.people.filter((p) => p.voiceInvited);
   const current = state.people.find((p) => p.id === person) ?? people[0];
   const [question, setQuestion] = useState(QUESTIONS[0]?.label ?? "");

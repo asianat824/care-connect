@@ -1,9 +1,9 @@
 # Current update
-- [ ] Add private voice-request choices and invitation lifecycle
-- [ ] Add isolated guest contribution screen and source-aware submissions
-- [ ] Expand source labels for together, conversation, observation, circle, and confirmation
-- [ ] Add Care Network navigation and page with peer, resource, and local support
-- [ ] Remove Care Network content from My Care Circle
+- [x] Add private voice-request choices and invitation lifecycle
+- [x] Add isolated guest contribution screen and source-aware submissions
+- [x] Expand source labels for together, conversation, observation, circle, and confirmation
+- [x] Add Care Network navigation and page with peer, resource, and local support
+- [x] Remove Care Network content from My Care Circle
 - [ ] Verify privacy boundaries, accessibility, mobile/desktop layouts, and build
 
 # Refinement roadmap
