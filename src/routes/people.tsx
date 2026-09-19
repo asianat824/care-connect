@@ -488,7 +488,7 @@ function PersonDetail({ person }: { person: Person }) {
             ? `What matters to ${person.name.split(" ")[0]}`
             : SECTION_LABELS[key];
         return (
-          <Card key={key} id={key}>
+          <Card key={key}>
             <SectionTitle
               title={title}
               subtitle={SECTION_HINTS[key]}
