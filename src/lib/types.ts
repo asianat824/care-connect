@@ -97,6 +97,15 @@ export interface Member {
   permissions: Permission[];
 }
 
+export type RequestStatus =
+  | "Draft"
+  | "Sent"
+  | "Accepted"
+  | "Declined"
+  | "No response"
+  | "Completed"
+  | "Cancelled";
+
 export interface HelpRequest {
   id: string;
   type: string;
@@ -104,8 +113,43 @@ export interface HelpRequest {
   by: string;
   instructions: string;
   visibleTo: string[];
-  status: "open" | "accepted" | "complete";
+  status: RequestStatus;
   acceptedBy?: string;
+  declinedBy?: string[];
+  sentAt?: string;
+  personId?: string;
+  taskId?: string;
+  questions?: { id: string; from: string; text: string }[];
+}
+
+export type TaskKind = "Caregiving" | "Personal";
+
+export type CapacityBucket =
+  | "Not sorted yet"
+  | "I can handle this"
+  | "I may need help"
+  | "This is outside my capacity";
+
+export interface Task {
+  id: string;
+  title: string;
+  kind: TaskKind;
+  personId?: string;
+  due?: string;
+  notes?: string;
+  bucket: CapacityBucket;
+  done: boolean;
+  createdAt: string;
+}
+
+export interface Priority {
+  id: string;
+  personId: string;
+  text: string;
+  taskId?: string;
+  reviewDate?: string;
+  done: boolean;
+  createdAt: string;
 }
 
 export interface Offer {
@@ -158,4 +202,12 @@ export interface AppState {
   networkQuestions?: { id: string; date: string; text: string }[];
   savedResourceIds?: string[];
   localSupportZip?: string;
+  tasks: Task[];
+  carePriorities: Priority[];
+  checkInDraft?: {
+    mood: string;
+    energy: number;
+    capacity: Capacity;
+    note: string;
+  };
 }

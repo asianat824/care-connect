@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { CloudRain, Frown, Meh, Moon, Smile } from "lucide-react";
 import { Avatar, Button, Card, Chip, Empty, SectionTitle, Tag } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import { CONNECTION_PROMPTS, today, uid } from "@/lib/demo-data";
 import {
@@ -197,27 +199,37 @@ function CheckBackSection() {
   );
 }
 
+const QUICK_MOODS: { label: string; Icon: typeof Smile; capacity: Capacity }[] = [
+  { label: "Good", Icon: Smile, capacity: "I have capacity" },
+  { label: "Okay", Icon: Meh, capacity: "I have capacity" },
+  { label: "Tired", Icon: Moon, capacity: "I am feeling stretched" },
+  { label: "Frustrated", Icon: Frown, capacity: "I am feeling stretched" },
+  { label: "Overwhelmed", Icon: CloudRain, capacity: "I am overwhelmed" },
+];
+
 function HomePage() {
   const { state, setState } = useStore();
-  const [quick, setQuick] = useState<Capacity | null>(null);
+  const [quick, setQuick] = useState<string | null>(null);
   const prompt = CONNECTION_PROMPTS[new Date().getDay() % CONNECTION_PROMPTS.length] ?? "";
-  const openRequests = state.requests.filter((r) => r.status !== "complete");
+  const openRequests = state.requests.filter(
+    (r) => r.status !== "Completed" && r.status !== "Cancelled",
+  );
 
-  const saveQuick = (c: Capacity) => {
-    setQuick(c);
+  const saveQuick = (mood: string, c: Capacity) => {
+    setQuick(mood);
     setState((s) => ({
       ...s,
       checkIns: [
         {
           id: uid(),
           date: today(),
-          mood: "",
+          mood,
           energy: 3,
           capacity: c,
           forMyself: "",
           needToday: "",
           outsideCapacity: "",
-          notes: "Quick capacity check-in",
+          notes: "Quick check-in",
           shared: false,
         },
         ...s.checkIns,
@@ -237,17 +249,30 @@ function HomePage() {
       </header>
 
       <Card>
-        <SectionTitle title="A quick capacity check-in" subtitle="Private. One tap." />
-        <div className="flex min-w-0 flex-wrap gap-2">
-          {CAPACITIES.map((c) => (
-            <Chip key={c} selected={quick === c} onClick={() => saveQuick(c)} className="max-w-full whitespace-normal">
-              {c}
-            </Chip>
+        <SectionTitle title="Quick check-in" subtitle="One tap. Private by default." />
+        <p className="text-base font-medium">How are you feeling right now?</p>
+        <div className="mt-3 flex min-w-0 flex-wrap gap-2" role="group" aria-label="How are you feeling right now?">
+          {QUICK_MOODS.map(({ label, Icon, capacity }) => (
+            <button
+              key={label}
+              type="button"
+              aria-pressed={quick === label}
+              onClick={() => saveQuick(label, capacity)}
+              className={cn(
+                "flex min-w-[6rem] flex-1 flex-col items-center gap-2 rounded-2xl border px-4 py-4 text-base font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:flex-none",
+                quick === label
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card text-foreground hover:bg-muted",
+              )}
+            >
+              <Icon className="size-6" aria-hidden="true" />
+              <span>{label}</span>
+            </button>
           ))}
         </div>
         {quick ? (
           <p className="mt-4 text-base text-secondary-foreground">
-            Saved. Thank you for being honest with yourself.
+            Check-in saved. Nothing is shared unless you choose to share it.
           </p>
         ) : null}
         <Link to="/check-in" className="mt-5 block">
@@ -304,7 +329,9 @@ function HomePage() {
               <li key={r.id} className="rounded-2xl border border-border p-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <Tag tone="warm">{r.type}</Tag>
-                  <Tag>{r.status === "accepted" ? `Accepted by ${r.acceptedBy}` : "Waiting"}</Tag>
+                  <Tag>
+                    {r.status === "Accepted" ? `Accepted by ${r.acceptedBy}` : `Status: ${r.status}`}
+                  </Tag>
                 </div>
                 <p className="mt-2 text-base">{r.detail}</p>
               </li>

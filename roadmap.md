@@ -15,3 +15,13 @@
 - [x] Simplify Care Circle navigation and move secondary support lower.
 - [x] Expand and label the Care Moments memory collection.
 - [x] Improve contrast and verify desktop/mobile behavior.
+
+## Caregiver support loop
+- [x] Homepage quick check-in with five labelled mood buttons
+- [x] My Check-In as four accordions (how I'm doing, my plate, capacity, delegate)
+- [x] Support-now decision path incl. emergency notice
+- [x] Current priorities and connected tasks on person profiles
+- [x] Care Circle request statuses, member actions, "I still need help" pathway
+- [x] Care Network "When your circle cannot help" + privacy-safe question conversion
+- [x] Care Moments supporting statement
+- [x] Verified demo flow, mobile layout, and build

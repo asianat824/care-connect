@@ -15,6 +15,7 @@ import {
 import { useStore } from "@/lib/store";
 import { today, uid } from "@/lib/demo-data";
 import {
+  addDays,
   CHECK_BACK_EXPLANATION,
   REVIEW_CHOICES,
   SECTION_LABELS,
@@ -427,7 +428,7 @@ function PersonDetail({ person }: { person: Person }) {
       `Warm handoff for ${person.preferredName || person.name} · ${today()}`,
       "",
       `What happened recently: ${person.updates[0]?.text ?? "No new updates this week."}`,
-      `What needs attention: ${state.requests.find((r) => r.status !== "complete")?.detail ?? "Nothing urgent right now."}`,
+      `What needs attention: ${state.requests.find((r) => r.status !== "Completed" && r.status !== "Cancelled")?.detail ?? "Nothing urgent right now."}`,
       `Current preferences: ${prefs || "Ask her before starting anything new."}`,
       `Next planned action: ${nextAction ?? "Check in tomorrow morning."}`,
       `Who is responsible: ${state.members[0]?.name ?? state.caregiverName}`,
@@ -442,7 +443,7 @@ function PersonDetail({ person }: { person: Person }) {
           date: today(),
           recent: person.updates[0]?.text ?? "No new updates this week.",
           attention:
-            s.requests.find((r) => r.status !== "complete")?.detail ?? "Nothing urgent right now.",
+            s.requests.find((r) => r.status !== "Completed" && r.status !== "Cancelled")?.detail ?? "Nothing urgent right now.",
           preferences: prefs || "Ask her before starting anything new.",
           next: nextAction ?? "Check in tomorrow morning.",
           responsible: s.members[0]?.name ?? s.caregiverName,
@@ -565,6 +566,8 @@ function PersonDetail({ person }: { person: Person }) {
           <pre className="whitespace-pre-wrap font-sans text-base">{handoff}</pre>
         </Card>
       ) : null}
+
+      <CurrentPriorities person={person} />
 
       {DETAIL_SECTIONS.map((key) => {
         const items = person[key].filter((d) => !d.archived);
@@ -734,5 +737,135 @@ function PersonDetail({ person }: { person: Person }) {
         ) : null}
       </Card>
     </div>
+  );
+}
+
+function CurrentPriorities({ person }: { person: Person }) {
+  const { state, setState } = useStore();
+  const [text, setText] = useState("");
+  const [adding, setAdding] = useState(false);
+  const firstName = person.preferredName || person.name.split(" ")[0] || person.name;
+
+  const active = state.carePriorities.filter((p) => p.personId === person.id && !p.done).slice(0, 4);
+  const openTasks = state.tasks.filter((t) => t.personId === person.id && !t.done);
+
+  const patch = (id: string, p: Partial<(typeof state.carePriorities)[number]>) =>
+    setState((s) => ({
+      ...s,
+      carePriorities: s.carePriorities.map((x) => (x.id === id ? { ...x, ...p } : x)),
+    }));
+
+  const addPriority = () => {
+    if (!text.trim()) return;
+    setState((s) => ({
+      ...s,
+      carePriorities: [
+        { id: uid(), personId: person.id, text: text.trim(), done: false, createdAt: today() },
+        ...s.carePriorities,
+      ],
+    }));
+    setText("");
+    setAdding(false);
+  };
+
+  /** Creates a task on the caregiver's plate from a priority, then links the two. */
+  const makeTask = (priorityId: string, title: string) => {
+    const taskId = uid();
+    setState((s) => ({
+      ...s,
+      tasks: [
+        {
+          id: taskId,
+          title,
+          kind: "Caregiving" as const,
+          personId: person.id,
+          bucket: "Not sorted yet" as const,
+          done: false,
+          createdAt: today(),
+        },
+        ...s.tasks,
+      ],
+      carePriorities: s.carePriorities.map((x) => (x.id === priorityId ? { ...x, taskId } : x)),
+    }));
+  };
+
+  return (
+    <Card>
+      <SectionTitle
+        title="Current priorities"
+        subtitle={`What currently needs attention for ${firstName}.`}
+      />
+      {active.length === 0 ? (
+        <Empty title="Nothing pressing right now" body="Add a priority when something needs attention." />
+      ) : (
+        <ul className="space-y-3">
+          {active.map((p) => {
+            const task = state.tasks.find((t) => t.id === p.taskId);
+            return (
+              <li key={p.id} className="rounded-2xl border border-border p-4">
+                <p className="text-lg">{p.text}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {task ? <Tag tone="sage">On my plate · {task.bucket}</Tag> : null}
+                  {p.reviewDate ? <Tag>Review {p.reviewDate}</Tag> : null}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button variant="support" className="px-4 py-2 text-sm" onClick={() => patch(p.id, { done: true })}>
+                    Mark complete
+                  </Button>
+                  {task ? (
+                    <Link to="/check-in" search={{ section: "capacity" }}>
+                      <Button variant="quiet" className="px-4 py-2 text-sm">Open in My Check-In</Button>
+                    </Link>
+                  ) : (
+                    <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => makeTask(p.id, p.text)}>
+                      Create a task from this
+                    </Button>
+                  )}
+                  {task ? (
+                    <Link to="/check-in" search={{ section: "delegate", delegate: task.id }}>
+                      <Button variant="quiet" className="px-4 py-2 text-sm">Turn into a Care Circle request</Button>
+                    </Link>
+                  ) : null}
+                  <Button
+                    variant="ghost"
+                    className="px-4 py-2 text-sm"
+                    onClick={() => patch(p.id, { reviewDate: addDays(7) })}
+                  >
+                    Check back in a week
+                  </Button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {openTasks.length ? (
+        <div className="mt-5 border-t border-border pt-4">
+          <p className="text-base font-medium">Open tasks connected to {firstName}</p>
+          <ul className="mt-2 space-y-1">
+            {openTasks.map((t) => (
+              <li key={t.id} className="text-base text-muted-foreground">
+                {t.title} · {t.bucket}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {adding ? (
+        <div className="mt-5 space-y-3">
+          <Field label="What needs attention?">
+            <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Groceries before the weekend" />
+          </Field>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="quiet" onClick={() => setAdding(false)}>Cancel</Button>
+            <Button disabled={!text.trim()} onClick={addPriority}>Save priority</Button>
+          </div>
+        </div>
+      ) : (
+        <Button className="mt-5" onClick={() => setAdding(true)}>Add a priority</Button>
+      )}
+    </Card>
   );
 }

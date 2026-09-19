@@ -68,7 +68,7 @@ function MomentsPage() {
       <header>
         <h1 className="font-display text-4xl">Care moments</h1>
         <p className="mt-2 text-lg text-muted-foreground">
-          Connection is care. A memory box for the parts of caregiving that aren't tasks.
+          Connection is care. Care is also the time you spend being present together.
         </p>
       </header>
 

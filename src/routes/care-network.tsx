@@ -5,6 +5,12 @@ import { today, uid } from "@/lib/demo-data";
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/care-network")({
+  validateSearch: (search: Record<string, unknown>) => {
+    const out: { tab?: string; ask?: string } = {};
+    if (typeof search["tab"] === "string") out.tab = search["tab"];
+    if (typeof search["ask"] === "string") out.ask = search["ask"];
+    return out;
+  },
   head: () => ({ meta: [
     { title: "Care Network — [PROJECT NAME]" },
     { name: "description", content: "Peer caregiver support, practical resources, and local programs beyond your immediate care circle." },
@@ -46,12 +52,26 @@ const LOCAL = [
 ];
 const FILTERS = ["Online", "In person", "Free", "Evening", "Weekend"];
 
+/** Turns a private request into a general, privacy-safe peer question. */
+function generalise(privateText: string) {
+  const t = privateText.toLowerCase();
+  if (/drive|ride|transport|appointment/.test(t))
+    return "How have other caregivers found reliable transportation for weekday medical appointments?";
+  if (/grocer|shop|errand/.test(t))
+    return "How do other caregivers arrange help with groceries and errands during a busy week?";
+  if (/medic|prescription|refill|pharmac/.test(t))
+    return "How do other caregivers keep prescription pickups from falling only on them?";
+  if (/meal|cook|food/.test(t)) return "How do other caregivers manage meals on the hardest days?";
+  return "How have other caregivers found help with a regular caregiving responsibility when their own circle could not step in?";
+}
+
 function CareNetworkPage() {
   const { state, setState } = useStore();
-  const [tab, setTab] = useState("Peer Support");
+  const params = Route.useSearch();
+  const [tab, setTab] = useState(params.tab ?? "Peer Support");
   const [openConversation, setOpenConversation] = useState<string | null>(null);
-  const [asking, setAsking] = useState(false);
-  const [question, setQuestion] = useState("");
+  const [asking, setAsking] = useState(Boolean(params.ask));
+  const [question, setQuestion] = useState(params.ask ? generalise(params.ask) : "");
   const [search, setSearch] = useState("");
   const [resourceDetail, setResourceDetail] = useState<string | null>(null);
   const [zip, setZip] = useState(state.localSupportZip ?? "");
@@ -67,7 +87,7 @@ function CareNetworkPage() {
 
     {tab === "Peer Support" ? <section className="space-y-5">
       <SectionTitle title="Peer support" subtitle="Lived-experience conversations with caregivers beyond your immediate circle." action={<Button onClick={() => setAsking(true)}>Ask the Care Network</Button>} />
-      {asking ? <Card className="space-y-4"><SectionTitle title="Ask the Care Network" /><p className="rounded-2xl bg-accent/15 p-4 text-base">Do not include names, addresses, medical-record details, or other information that could identify the person you care for.</p><Field label="What would you like to ask?"><Textarea value={question} onChange={(e) => setQuestion(e.target.value)} /></Field><div className="flex flex-wrap gap-2"><Button variant="quiet" onClick={() => setAsking(false)}>Cancel</Button><Button disabled={!question.trim()} onClick={() => { setState((s) => ({ ...s, networkQuestions: [{ id: uid(), date: today(), text: question.trim() }, ...(s.networkQuestions ?? [])] })); setQuestion(""); setAsking(false); }}>Post question</Button></div></Card> : null}
+      {asking ? <Card className="space-y-4"><SectionTitle title="Ask the Care Network" /><p className="rounded-2xl bg-accent/15 p-4 text-base">Do not include names, addresses, medical-record details, or other information that could identify the person you care for.</p>{params.ask ? <p className="rounded-2xl bg-muted p-4 text-base">Your private request stays private. We suggested a general version below — edit it before posting.</p> : null}<Field label="What would you like to ask?"><Textarea value={question} onChange={(e) => setQuestion(e.target.value)} /></Field><div className="flex flex-wrap gap-2"><Button variant="quiet" onClick={() => setAsking(false)}>Cancel</Button><Button disabled={!question.trim()} onClick={() => { setState((s) => ({ ...s, networkQuestions: [{ id: uid(), date: today(), text: question.trim() }, ...(s.networkQuestions ?? [])] })); setQuestion(""); setAsking(false); }}>Post question</Button></div></Card> : null}
       {(state.networkQuestions ?? []).map((q) => <Card key={q.id}><Tag tone="sage">Your demonstration question</Tag><p className="mt-3 text-lg">{q.text}</p><p className="mt-1 text-sm text-muted-foreground">{q.date} · 0 responses</p></Card>)}
       <div className="grid gap-4 sm:grid-cols-2">{CONVERSATIONS.map((c) => <Card key={c.id}><Tag>{c.category}</Tag><h2 className="mt-3 font-display text-xl">{c.topic}</h2><p className="mt-1 text-base text-muted-foreground">{c.preview}</p><p className="mt-3 text-sm text-muted-foreground">{c.responses} responses</p><Button variant="support" className="mt-4" onClick={() => setOpenConversation(openConversation === c.id ? null : c.id)}>{openConversation === c.id ? "Close Conversation" : "Join Conversation"}</Button>{openConversation === c.id ? <div className="mt-4 border-t border-border pt-4"><p className="text-base">{c.detail}</p><p className="mt-3 text-sm text-muted-foreground">Demonstration conversation · No private care-space information is shown.</p></div> : null}</Card>)}</div>
     </section> : null}
@@ -75,5 +95,19 @@ function CareNetworkPage() {
     {tab === "Caregiver Resources" ? <section className="space-y-5"><SectionTitle title="Caregiver resources" subtitle="Fictional demonstration content for exploring the prototype." /><Field label="Search resources"><Input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Try respite, transportation, or legal" /></Field><div className="grid gap-4 sm:grid-cols-2">{filteredResources.map((r) => <Card key={r.id}><Tag tone="warm">Demonstration content</Tag><h2 className="mt-3 font-display text-xl">{r.name}</h2><p className="mt-1 text-base text-muted-foreground">{r.description}</p><p className="mt-3 text-sm font-semibold">{r.type} · {r.location}</p><div className="mt-4 flex flex-wrap gap-2"><Button variant={saved.includes(r.id) ? "quiet" : "support"} onClick={() => setState((s) => ({ ...s, savedResourceIds: saved.includes(r.id) ? saved.filter((id) => id !== r.id) : [...saved, r.id] }))}>{saved.includes(r.id) ? "Saved" : "Save Resource"}</Button><Button variant="quiet" onClick={() => setResourceDetail(resourceDetail === r.id ? null : r.id)}>View Details</Button></div>{resourceDetail === r.id ? <p className="mt-4 border-t border-border pt-4 text-base">This fictional listing shows where eligibility, hours, contact information, and accessibility details could appear.</p> : null}</Card>)}</div></section> : null}
 
     {tab === "Local Support" ? <section className="space-y-5"><SectionTitle title="Local support" subtitle="Explore fictional examples near you." /><Card className="space-y-4"><Field label="ZIP code"><Input inputMode="numeric" maxLength={5} value={zip} onChange={(e) => setZip(e.target.value.replace(/\D/g, ""))} placeholder="48201" /></Field><Button disabled={zip.length !== 5} onClick={() => setState((s) => ({ ...s, localSupportZip: zip }))}>View local examples</Button></Card>{state.localSupportZip ? <><div className="flex flex-wrap gap-2" aria-label="Filter local support">{FILTERS.map((f) => <Chip key={f} selected={filters.includes(f)} onClick={() => setFilters((v) => v.includes(f) ? v.filter((x) => x !== f) : [...v, f])}>{f}</Chip>)}</div><p className="text-sm text-muted-foreground">Fictional demonstration results near {state.localSupportZip}.</p><div className="grid gap-4 sm:grid-cols-2">{filteredLocal.map((item) => <Card key={item.id}><Tag tone="warm">Demonstration content</Tag><h2 className="mt-3 font-display text-xl">{item.name}</h2><p className="mt-1 text-base text-muted-foreground">{item.kind}</p><div className="mt-3 flex flex-wrap gap-2">{item.tags.map((tag) => <Tag key={tag} tone="sage">{tag}</Tag>)}</div></Card>)}</div>{filteredLocal.length === 0 ? <p className="text-base text-muted-foreground">No fictional examples match every selected filter.</p> : null}</> : null}</section> : null}
+    <Card className="bg-muted/40">
+      <SectionTitle title="When your circle cannot help" subtitle="Explore another path when personal support is unavailable." />
+      <div className="flex flex-wrap gap-2">
+        <Button variant="quiet" onClick={() => setTab("Peer Support")}>Peer Support</Button>
+        <Button variant="quiet" onClick={() => setTab("Caregiver Resources")}>Caregiver Resources</Button>
+        <Button variant="quiet" onClick={() => setTab("Local Support")}>Local Support</Button>
+        <Button variant="quiet" onClick={() => { setTab("Caregiver Resources"); setSearch("respite"); }}>Respite information</Button>
+        <Button variant="quiet" onClick={() => { setTab("Caregiver Resources"); setSearch("transportation"); }}>Transportation resources</Button>
+        <Button variant="quiet" onClick={() => { setTab("Caregiver Resources"); setSearch("benefits"); }}>Benefits and financial support</Button>
+      </div>
+      <p className="mt-4 text-base text-muted-foreground">
+        All listings here are fictional demonstration content. A peer conversation is not a substitute for professional, emergency, or medical assistance.
+      </p>
+    </Card>
   </div>;
 }
