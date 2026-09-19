@@ -1,8 +1,37 @@
-import type { AppState } from "./types";
+import type { AppState, Detail, DetailSource, DetailStatus } from "./types";
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
 
 export const today = () => new Date().toISOString().slice(0, 10);
+
+const addDays = (n: number) => {
+  const dt = new Date();
+  dt.setDate(dt.getDate() + n);
+  return dt.toISOString().slice(0, 10);
+};
+
+/** Small helper for readable fictional profile details. */
+function d(
+  id: string,
+  text: string,
+  source: DetailSource,
+  status: DetailStatus,
+  addedDaysAgo: number,
+  sourceName?: string,
+  reviewDate?: string,
+): Detail {
+  return {
+    id,
+    text,
+    source,
+    status,
+    dateAdded: addDays(-addedDaysAgo),
+    lastConfirmed: addDays(-addedDaysAgo),
+    confirmedBy: "Jordan",
+    ...(sourceName ? { sourceName } : {}),
+    ...(reviewDate ? { reviewDate } : {}),
+  };
+}
 
 export const PRIORITIES = [
   "Keeping important information together",
@@ -68,29 +97,36 @@ export function seedState(): AppState {
         relationship: "My mother",
         pronouns: "she/her",
         whatMatters: [
-          "Being asked, not told",
-          "Sunday service on the radio",
-          "Her garden by the back door",
+          d("d1", "Being asked, not told.", "They told me", "Current", 40),
+          d("d2", "Sunday service on the radio matters to her week.", "They told me", "Current", 60),
+          d("d3", "Her garden by the back door is hers to tend.", "I noticed", "Current", 25),
+        ],
+        communication: [
+          d("d4", "Prefers one question at a time.", "They told me", "Current", 35),
+          d("d5", "Becomes anxious when plans change without warning.", "I noticed", "Current", 20),
+          d("d6", "Repeat gently rather than louder.", "Someone else shared this", "Current", 15, "Alicia Boateng"),
+        ],
+        comfort: [
+          d("d7", "Gospel music helps her relax in the morning.", "They told me", "Current", 50),
+          d("d8", "Lamp light, not overhead.", "I noticed", "Current", 30),
+          d("d9", "A hand on her shoulder before you begin.", "They told me", "Temporary", 10),
         ],
         routines: [
-          "Wakes around 6:30 and likes the blinds opened slowly",
-          "Gospel music with breakfast",
-          "Rests between 1:00 and 3:00",
+          d("d10", "Prefers appointments after 11:00 a.m.", "They told me", "Current", 92, undefined, today()),
+          d("d11", "Wakes around 6:30 and likes the blinds opened slowly.", "I noticed", "Current", 45),
+          d("d12", "Rests between 1:00 and 3:00.", "They told me", "Current", 28),
         ],
-        likes: ["Gospel music in the morning", "Sweet tea", "Photos of the grandkids"],
-        dislikes: ["Loud television", "Being rushed", "Cold rooms"],
-        communication: [
-          "Prefers to receive one instruction at a time",
-          "Becomes anxious when plans change without warning",
-          "Repeat gently rather than louder",
+        preferences: [
+          d("d13", "Likes to know about changes in advance.", "They told me", "Current", 33),
+          d("d14", "Sweet tea, no ice, in the afternoon.", "I noticed", "Current", 18),
+          d("d15", "Loud television is too much for her right now.", "I should confirm", "Unsure", 12, undefined, addDays(4)),
         ],
-        comfort: ["Blue quilt on her chair", "Lamp light, not overhead", "Hand on her shoulder first"],
         updates: [
           { id: "u1", date: today(), text: "Slept well two nights in a row. Appetite is better." },
         ],
         coordination: [
-          "Prefers appointments after 11:00 a.m.",
-          "Marcus drives on Tuesdays",
+          d("d16", "Marcus drives on Tuesdays.", "Someone else shared this", "Current", 22, "Marcus Ellis"),
+          d("d17", "A new evening medication was mentioned at her last visit.", "Someone else shared this", "Temporary", 95, "Marcus Ellis", addDays(-2)),
         ],
         voiceInvited: true,
         voiceEntries: [

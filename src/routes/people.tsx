@@ -4,32 +4,48 @@ import {
   Avatar,
   Button,
   Card,
+  Chip,
   Empty,
   Field,
   Input,
   SectionTitle,
-  Tabs,
   Tag,
   Textarea,
 } from "@/components/ui";
 import { useStore } from "@/lib/store";
 import { today, uid } from "@/lib/demo-data";
-import type { Person } from "@/lib/types";
+import {
+  CHECK_BACK_EXPLANATION,
+  REVIEW_CHOICES,
+  SECTION_LABELS,
+  SOURCES,
+  STATUSES,
+  lastConfirmedPhrase,
+  reviewDateFor,
+  sourceLabel,
+  type ReviewChoice,
+} from "@/lib/details";
+import type { Detail, DetailKey, DetailSource, DetailStatus, Person } from "@/lib/types";
 
 export const Route = createFileRoute("/people")({
-  validateSearch: (search: Record<string, unknown>) => ((typeof search["person"] === "string" ? { person: search["person"] as string } : {}) as { person?: string }),
+  validateSearch: (search: Record<string, unknown>) => {
+    const out: { person?: string; detail?: string } = {};
+    if (typeof search["person"] === "string") out.person = search["person"];
+    if (typeof search["detail"] === "string") out.detail = search["detail"];
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "People I Care For — [PROJECT NAME]" },
       {
         name: "description",
         content:
-          "Remember the whole person: what matters to them, routines, preferences, and how they like to be spoken with.",
+          "An external memory for care: what matters, how they like to be spoken with, routines, preferences, and when to check back.",
       },
       { property: "og:title", content: "People I Care For — [PROJECT NAME]" },
       {
         property: "og:description",
-        content: "Personhood first: preferences, routines, and warm handoffs.",
+        content: "Personhood first: preferences, routines, sources, and gentle check-backs.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -38,15 +54,35 @@ export const Route = createFileRoute("/people")({
   component: PeoplePage,
 });
 
-const SECTIONS = [
-  "About Them",
-  "Routine",
-  "Preferences",
-  "Communication",
-  "Important Updates",
-  "Care Coordination",
-  "Care Moments",
+const DETAIL_SECTIONS: DetailKey[] = [
+  "whatMatters",
+  "communication",
+  "comfort",
+  "routines",
+  "preferences",
+  "coordination",
 ];
+
+const SECTION_HINTS: Record<DetailKey, string> = {
+  whatMatters: "The things that make them feel like themselves.",
+  communication: "How they most like to be spoken with.",
+  comfort: "What helps them settle and feel supported.",
+  routines: "The shape of an ordinary day.",
+  preferences: "Small things worth remembering.",
+  coordination: "Practical notes, not clinical ones.",
+};
+
+const SECTION_PLACEHOLDER: Record<DetailKey, string> = {
+  whatMatters: "Being asked, not told.",
+  communication: "Prefers one question at a time.",
+  comfort: "Gospel music helps her relax in the morning.",
+  routines: "Prefers appointments after 11:00 a.m.",
+  preferences: "Likes to know about changes in advance.",
+  coordination: "Marcus drives on Tuesdays.",
+};
+
+const isHealthRelated = (text: string) =>
+  /medicat|medicine|prescrib|prescription|pill|dose|dosage|pharmac/i.test(text);
 
 function PeoplePage() {
   const { state, setState } = useStore();
@@ -73,8 +109,7 @@ function PeoplePage() {
           pronouns: "",
           whatMatters: [],
           routines: [],
-          likes: [],
-          dislikes: [],
+          preferences: [],
           communication: [],
           comfort: [],
           updates: [],
@@ -95,7 +130,7 @@ function PeoplePage() {
       <header>
         <h1 className="font-display text-4xl">People I care for</h1>
         <p className="mt-2 text-lg text-muted-foreground">
-          The details that make care feel personal, not procedural.
+          Care means continuing to ask, not assuming yesterday's answer still applies today.
         </p>
       </header>
 
@@ -107,26 +142,33 @@ function PeoplePage() {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {state.people.map((p) => (
-            <Link key={p.id} to="/people" search={{ person: p.id }}>
-              <Card className="h-full transition-colors hover:bg-muted/50">
-                <div className="flex items-center gap-4">
-                  <Avatar name={p.name} photo={p.photo} size={56} />
-                  <div>
-                    <p className="font-display text-xl">{p.name}</p>
-                    <p className="text-base text-muted-foreground">{p.relationship}</p>
+          {state.people.map((p) => {
+            const first = p.whatMatters.find((x) => !x.archived);
+            return (
+              <Link key={p.id} to="/people" search={{ person: p.id }}>
+                <Card className="h-full transition-colors hover:bg-muted/50">
+                  <div className="flex items-center gap-4">
+                    <Avatar name={p.name} photo={p.photo} size={56} />
+                    <div>
+                      <p className="font-display text-xl">{p.name}</p>
+                      <p className="text-base text-muted-foreground">{p.relationship}</p>
+                    </div>
                   </div>
-                </div>
-                {p.whatMatters[0] ? (
-                  <div className="mt-4 border-t border-border pt-4">
-                    <p className="text-sm font-semibold text-foreground">What matters to {p.name.split(" ")[0]}</p>
-                    <p className="mt-1 text-base text-foreground">“{p.whatMatters[0]}.”</p>
-                    <p className="mt-2 text-sm text-muted-foreground">Shared by {p.name.split(" ")[0]}</p>
-                  </div>
-                ) : null}
-              </Card>
-            </Link>
-          ))}
+                  {first ? (
+                    <div className="mt-4 border-t border-border pt-4">
+                      <p className="text-sm font-semibold text-foreground">
+                        What matters to {p.name.split(" ")[0]}
+                      </p>
+                      <p className="mt-1 text-base text-foreground">“{first.text}”</p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {sourceLabel(first, p, state.caregiverName)}
+                      </p>
+                    </div>
+                  ) : null}
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       )}
 
@@ -139,7 +181,7 @@ function PeoplePage() {
           <Field label="Your relationship to them">
             <Input value={relationship} onChange={(e) => setRelationship(e.target.value)} />
           </Field>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <Button variant="quiet" onClick={() => setAdding(false)}>
               Cancel
             </Button>
@@ -157,32 +199,222 @@ function PeoplePage() {
   );
 }
 
+function DetailForm({
+  person,
+  initial,
+  onCancel,
+  onSave,
+}: {
+  person: Person;
+  initial?: Detail;
+  onCancel: () => void;
+  onSave: (d: Detail) => void;
+}) {
+  const { state } = useStore();
+  const [text, setText] = useState(initial?.text ?? "");
+  const [source, setSource] = useState<DetailSource>(initial?.source ?? "They told me");
+  const [sourceName, setSourceName] = useState(initial?.sourceName ?? "");
+  const [status, setStatus] = useState<DetailStatus>(initial?.status ?? "Current");
+  const [review, setReview] = useState<ReviewChoice>(
+    initial?.reviewDate ? "Custom date" : "No reminder",
+  );
+  const [custom, setCustom] = useState(initial?.reviewDate ?? "");
+
+  const who = person.preferredName || person.name.split(" ")[0] || person.name;
+
+  const save = () => {
+    if (!text.trim()) return;
+    const reviewDate = reviewDateFor(review, custom);
+    const base: Detail = {
+      id: initial?.id ?? uid(),
+      text: text.trim(),
+      source,
+      status,
+      dateAdded: initial?.dateAdded ?? today(),
+      lastConfirmed: today(),
+      confirmedBy: state.caregiverName,
+      ...(source === "Someone else shared this" && sourceName.trim()
+        ? { sourceName: sourceName.trim() }
+        : {}),
+      ...(reviewDate ? { reviewDate } : {}),
+      ...(initial && initial.text !== text.trim()
+        ? { history: [{ date: today(), text: initial.text }, ...(initial.history ?? [])] }
+        : initial?.history
+          ? { history: initial.history }
+          : {}),
+    };
+    onSave(base);
+  };
+
+  return (
+    <div className="mt-4 space-y-5 rounded-2xl border border-border bg-muted/30 p-4 sm:p-5">
+      <Field label="What would you like to remember?">
+        <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Being asked, not told." />
+      </Field>
+
+      <fieldset>
+        <legend className="text-base font-medium text-foreground">How do you know this?</legend>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {SOURCES.map((s) => (
+            <Chip key={s} selected={source === s} onClick={() => setSource(s)} className="max-w-full whitespace-normal">
+              {s === "They told me" ? `${who} told me` : s}
+            </Chip>
+          ))}
+        </div>
+        {source === "Someone else shared this" ? (
+          <div className="mt-3">
+            <Field label="Who shared it?">
+              <Input value={sourceName} onChange={(e) => setSourceName(e.target.value)} placeholder="Marcus" />
+            </Field>
+          </div>
+        ) : null}
+      </fieldset>
+
+      <fieldset>
+        <legend className="text-base font-medium text-foreground">Is this still the case?</legend>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {STATUSES.map((s) => (
+            <Chip key={s} selected={status === s} onClick={() => setStatus(s)} className="max-w-full whitespace-normal">
+              {s}
+            </Chip>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend className="text-base font-medium text-foreground">Check back</legend>
+        <p className="mt-1 text-sm text-muted-foreground">{CHECK_BACK_EXPLANATION}</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {REVIEW_CHOICES.map((c) => (
+            <Chip key={c} selected={review === c} onClick={() => setReview(c)} className="max-w-full whitespace-normal">
+              {c}
+            </Chip>
+          ))}
+        </div>
+        {review === "Custom date" ? (
+          <div className="mt-3">
+            <Field label="Choose a date">
+              <Input type="date" value={custom} onChange={(e) => setCustom(e.target.value)} />
+            </Field>
+          </div>
+        ) : null}
+      </fieldset>
+
+      {isHealthRelated(text) ? (
+        <p className="rounded-2xl bg-secondary/25 px-4 py-3 text-sm text-foreground">
+          Check with the person or an appropriate care provider to make sure this is still current. This
+          space is for remembering, not for managing medication.
+        </p>
+      ) : null}
+
+      <div className="flex flex-wrap gap-3">
+        <Button variant="quiet" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button disabled={!text.trim()} onClick={save}>
+          Save detail
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function DetailCard({
+  detail,
+  person,
+  caregiverName,
+  onEdit,
+  onConfirm,
+  onArchive,
+}: {
+  detail: Detail;
+  person: Person;
+  caregiverName: string;
+  onEdit: () => void;
+  onConfirm: () => void;
+  onArchive: () => void;
+}) {
+  return (
+    <li className="rounded-2xl border border-border bg-card p-4">
+      <p className="text-base text-foreground">{detail.text}</p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Tag tone={detail.source === "I should confirm" ? "warm" : "sage"}>
+          {sourceLabel(detail, person, caregiverName)}
+        </Tag>
+        <Tag>{detail.status}</Tag>
+      </div>
+      <p className="mt-2 text-sm text-muted-foreground">
+        {lastConfirmedPhrase(detail)}
+        {detail.reviewDate ? ` · Check back on ${detail.reviewDate}` : " · No reminder set"}
+        {detail.confirmedBy ? ` · Confirmed by ${detail.confirmedBy}` : ""}
+      </p>
+      {isHealthRelated(detail.text) ? (
+        <p className="mt-2 rounded-2xl bg-secondary/25 px-3 py-2 text-sm text-foreground">
+          {lastConfirmedPhrase(detail)}. Check with the person or an appropriate care provider to make
+          sure it is still current.
+        </p>
+      ) : null}
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button variant="ghost" className="px-3 py-2 text-sm" onClick={onConfirm}>
+          Still accurate
+        </Button>
+        <Button variant="ghost" className="px-3 py-2 text-sm" onClick={onEdit}>
+          Update this
+        </Button>
+        <Button variant="ghost" className="px-3 py-2 text-sm" onClick={onArchive}>
+          Archive it
+        </Button>
+      </div>
+    </li>
+  );
+}
+
 function PersonDetail({ person }: { person: Person }) {
   const { state, setState } = useStore();
   const navigate = useNavigate();
-  const [tab, setTab] = useState(SECTIONS[0] ?? "");
+  const { detail: detailParam } = Route.useSearch();
+  const [openForm, setOpenForm] = useState<DetailKey | null>(null);
+  const [editing, setEditing] = useState<string | null>(detailParam ?? null);
   const [draft, setDraft] = useState("");
   const [handoff, setHandoff] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   const update = (fn: (p: Person) => Person) =>
     setState((s) => ({ ...s, people: s.people.map((p) => (p.id === person.id ? fn(p) : p)) }));
 
-  const addTo = (key: "whatMatters" | "routines" | "likes" | "dislikes" | "communication" | "comfort" | "coordination") => {
-    if (!draft.trim()) return;
-    update((p) => ({ ...p, [key]: [...p[key], draft.trim()] }));
-    setDraft("");
+  const saveDetail = (key: DetailKey, d: Detail) => {
+    update((p) => ({
+      ...p,
+      [key]: p[key].some((x) => x.id === d.id)
+        ? p[key].map((x) => (x.id === d.id ? d : x))
+        : [d, ...p[key]],
+    }));
+    setOpenForm(null);
+    setEditing(null);
   };
 
+  const patchDetail = (key: DetailKey, id: string, patch: Partial<Detail>) =>
+    update((p) => ({ ...p, [key]: p[key].map((x) => (x.id === id ? { ...x, ...patch } : x)) }));
+
   const moments = state.moments.filter((m) => m.personId === person.id);
+  const archived = DETAIL_SECTIONS.flatMap((k) =>
+    person[k].filter((d) => d.archived).map((d) => ({ key: k, detail: d })),
+  );
 
   const createHandoff = () => {
+    const prefs = [...person.communication, ...person.comfort]
+      .filter((d) => !d.archived)
+      .slice(0, 3)
+      .map((d) => d.text)
+      .join("; ");
+    const nextAction = person.coordination.find((d) => !d.archived)?.text;
     const text = [
       `Warm handoff for ${person.preferredName || person.name} · ${today()}`,
       "",
       `What happened recently: ${person.updates[0]?.text ?? "No new updates this week."}`,
       `What needs attention: ${state.requests.find((r) => r.status !== "complete")?.detail ?? "Nothing urgent right now."}`,
-      `Current preferences: ${[...person.communication, ...person.comfort].slice(0, 3).join("; ") || "Ask her before starting anything new."}`,
-      `Next planned action: ${person.coordination[0] ?? "Check in tomorrow morning."}`,
+      `Current preferences: ${prefs || "Ask her before starting anything new."}`,
+      `Next planned action: ${nextAction ?? "Check in tomorrow morning."}`,
       `Who is responsible: ${state.members[0]?.name ?? state.caregiverName}`,
     ].join("\n");
     setHandoff(text);
@@ -196,38 +428,14 @@ function PersonDetail({ person }: { person: Person }) {
           recent: person.updates[0]?.text ?? "No new updates this week.",
           attention:
             s.requests.find((r) => r.status !== "complete")?.detail ?? "Nothing urgent right now.",
-          preferences:
-            [...person.communication, ...person.comfort].slice(0, 3).join("; ") ||
-            "Ask her before starting anything new.",
-          next: person.coordination[0] ?? "Check in tomorrow morning.",
+          preferences: prefs || "Ask her before starting anything new.",
+          next: nextAction ?? "Check in tomorrow morning.",
           responsible: s.members[0]?.name ?? s.caregiverName,
         },
         ...s.handoffs,
       ],
     }));
   };
-
-  const list = (items: string[], key: Parameters<typeof addTo>[0], placeholder: string) => (
-    <div>
-      {items.length === 0 ? (
-        <p className="text-base text-muted-foreground">Nothing here yet.</p>
-      ) : (
-        <ul className="space-y-2">
-          {items.map((i, idx) => (
-            <li key={idx} className="rounded-2xl bg-muted/60 px-4 py-3 text-base">
-              {i}
-            </li>
-          ))}
-        </ul>
-      )}
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-        <Input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={placeholder} />
-        <Button variant="support" onClick={() => addTo(key)}>
-          Add
-        </Button>
-      </div>
-    </div>
-  );
 
   return (
     <div className="space-y-8">
@@ -245,6 +453,11 @@ function PersonDetail({ person }: { person: Person }) {
           </p>
         </div>
       </div>
+
+      <p className="text-base text-muted-foreground">
+        A private place to remember what helps {person.name.split(" ")[0]} feel understood — and to
+        notice when something may have changed.
+      </p>
 
       <div className="flex flex-wrap gap-3">
         <Button variant="connect" onClick={createHandoff}>
@@ -268,118 +481,172 @@ function PersonDetail({ person }: { person: Person }) {
         </Card>
       ) : null}
 
-      <Tabs tabs={SECTIONS} active={tab} onChange={setTab} />
-
-      <Card>
-        {tab === "About Them" && (
-          <>
-            <SectionTitle title="What matters to them" />
-            {list(person.whatMatters, "whatMatters", "Being asked, not told")}
-          </>
-        )}
-        {tab === "Routine" && (
-          <>
-            <SectionTitle title="Daily routines" />
-            {list(person.routines, "routines", "Rests between 1:00 and 3:00")}
-          </>
-        )}
-        {tab === "Preferences" && (
-          <div className="space-y-8">
-            <div>
-              <SectionTitle title="Likes" />
-              {list(person.likes, "likes", "Likes gospel music in the morning")}
-            </div>
-            <div>
-              <SectionTitle title="Dislikes" />
-              {list(person.dislikes, "dislikes", "Being rushed")}
-            </div>
-            <div>
-              <SectionTitle title="Comfort" />
-              {list(person.comfort, "comfort", "Lamp light, not overhead")}
-            </div>
-          </div>
-        )}
-        {tab === "Communication" && (
-          <>
+      {DETAIL_SECTIONS.map((key) => {
+        const items = person[key].filter((d) => !d.archived);
+        const title =
+          key === "whatMatters"
+            ? `What matters to ${person.name.split(" ")[0]}`
+            : SECTION_LABELS[key];
+        return (
+          <Card key={key}>
             <SectionTitle
-              title="Communication style"
-              subtitle="How they most like to be spoken with."
+              title={title}
+              subtitle={SECTION_HINTS[key]}
+              action={
+                <Button variant="support" onClick={() => setOpenForm(openForm === key ? null : key)}>
+                  Add detail
+                </Button>
+              }
             />
-            {list(person.communication, "communication", "Prefers one instruction at a time")}
-          </>
-        )}
-        {tab === "Important Updates" && (
-          <>
-            <SectionTitle title="Important updates" />
-            {person.updates.length === 0 ? (
-              <p className="text-base text-muted-foreground">No updates yet.</p>
-            ) : (
-              <ul className="space-y-2">
-                {person.updates.map((u) => (
-                  <li key={u.id} className="rounded-2xl bg-muted/60 px-4 py-3">
-                    <p className="text-sm text-muted-foreground">{u.date}</p>
-                    <p className="text-base">{u.text}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <Input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="Slept well two nights in a row."
-              />
-              <Button
-                variant="support"
-                onClick={() => {
-                  if (!draft.trim()) return;
-                  update((p) => ({
-                    ...p,
-                    updates: [{ id: uid(), date: today(), text: draft.trim() }, ...p.updates],
-                  }));
-                  setDraft("");
-                }}
-              >
-                Add
-              </Button>
-            </div>
-          </>
-        )}
-        {tab === "Care Coordination" && (
-          <>
-            <SectionTitle title="Care coordination notes" subtitle="Practical, not clinical." />
-            {list(person.coordination, "coordination", "Prefers appointments after 11:00 a.m.")}
-          </>
-        )}
-        {tab === "Care Moments" && (
-          <>
-            <SectionTitle title="Care moments" subtitle="Connection is care." />
-            {moments.length === 0 ? (
-              <Empty
-                title="No moments yet"
-                body="Add a song, a story, or a memory you share with them."
-                action={
-                  <Link to="/moments">
-                    <Button variant="connect">Go to Care Moments</Button>
-                  </Link>
-                }
-              />
+            {items.length === 0 ? (
+              <p className="text-base text-muted-foreground">
+                Nothing here yet. Try “{SECTION_PLACEHOLDER[key]}”
+              </p>
             ) : (
               <ul className="space-y-3">
-                {moments.map((m) => (
-                  <li key={m.id} className="rounded-2xl border border-border p-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Tag tone="warm">{m.kind}</Tag>
-                      {m.fromPerson ? <Tag tone="sage">Shared by {person.name.split(" ")[0]}</Tag> : null}
-                    </div>
-                    <p className="mt-2 font-display text-xl">{m.title}</p>
-                    <p className="text-base text-muted-foreground">{m.body}</p>
-                  </li>
-                ))}
+                {items.map((d) =>
+                  editing === d.id ? (
+                    <li key={d.id}>
+                      <DetailForm
+                        person={person}
+                        initial={d}
+                        onCancel={() => setEditing(null)}
+                        onSave={(nd) => saveDetail(key, nd)}
+                      />
+                    </li>
+                  ) : (
+                    <DetailCard
+                      key={d.id}
+                      detail={d}
+                      person={person}
+                      caregiverName={state.caregiverName}
+                      onEdit={() => setEditing(d.id)}
+                      onConfirm={() =>
+                        patchDetail(key, d.id, {
+                          lastConfirmed: today(),
+                          confirmedBy: state.caregiverName,
+                          status: "Current",
+                        })
+                      }
+                      onArchive={() => patchDetail(key, d.id, { archived: true })}
+                    />
+                  ),
+                )}
               </ul>
             )}
-          </>
+            {openForm === key ? (
+              <DetailForm
+                person={person}
+                onCancel={() => setOpenForm(null)}
+                onSave={(d) => saveDetail(key, d)}
+              />
+            ) : null}
+          </Card>
+        );
+      })}
+
+      <Card>
+        <SectionTitle title="Important updates" subtitle="What has changed lately." />
+        {person.updates.length === 0 ? (
+          <p className="text-base text-muted-foreground">No updates yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {person.updates.map((u) => (
+              <li key={u.id} className="rounded-2xl bg-muted/60 px-4 py-3">
+                <p className="text-sm text-muted-foreground">{u.date}</p>
+                <p className="text-base">{u.text}</p>
+              </li>
+            ))}
+          </ul>
         )}
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <Input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Slept well two nights in a row."
+            aria-label="Add an important update"
+          />
+          <Button
+            variant="support"
+            onClick={() => {
+              if (!draft.trim()) return;
+              update((p) => ({
+                ...p,
+                updates: [{ id: uid(), date: today(), text: draft.trim() }, ...p.updates],
+              }));
+              setDraft("");
+            }}
+          >
+            Add
+          </Button>
+        </div>
+      </Card>
+
+      <Card>
+        <SectionTitle title="Care moments" subtitle="Connection is care." />
+        {moments.length === 0 ? (
+          <Empty
+            title="No moments yet"
+            body="Add a song, a story, or a memory you share with them."
+            action={
+              <Link to="/moments">
+                <Button variant="connect">Go to Care Moments</Button>
+              </Link>
+            }
+          />
+        ) : (
+          <ul className="space-y-3">
+            {moments.map((m) => (
+              <li key={m.id} className="rounded-2xl border border-border p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Tag tone="warm">{m.kind}</Tag>
+                  {m.fromPerson ? <Tag tone="sage">Shared by {person.name.split(" ")[0]}</Tag> : null}
+                </div>
+                <p className="mt-2 font-display text-xl">{m.title}</p>
+                <p className="text-base text-muted-foreground">{m.body}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <Card>
+        <SectionTitle
+          title="Archived details"
+          subtitle="Kept quietly, out of the active profile."
+          action={
+            <Button variant="quiet" onClick={() => setShowArchived((v) => !v)}>
+              {showArchived ? "Hide" : `Show (${archived.length})`}
+            </Button>
+          }
+        />
+        {showArchived ? (
+          archived.length === 0 ? (
+            <p className="text-base text-muted-foreground">Nothing archived yet.</p>
+          ) : (
+            <ul className="space-y-3">
+              {archived.map(({ key, detail }) => (
+                <li key={detail.id} className="rounded-2xl border border-border bg-muted/40 p-4">
+                  <p className="text-sm text-muted-foreground">{SECTION_LABELS[key]}</p>
+                  <p className="mt-1 text-base">{detail.text}</p>
+                  <Button
+                    variant="ghost"
+                    className="mt-2 px-3 py-2 text-sm"
+                    onClick={() =>
+                      patchDetail(key, detail.id, {
+                        archived: false,
+                        lastConfirmed: today(),
+                        confirmedBy: state.caregiverName,
+                      })
+                    }
+                  >
+                    Bring this back
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )
+        ) : null}
       </Card>
     </div>
   );
