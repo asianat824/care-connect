@@ -17,6 +17,36 @@ export interface CheckIn {
   shared: boolean;
 }
 
+export type DetailSource =
+  | "They told me"
+  | "I noticed"
+  | "Someone else shared this"
+  | "I should confirm";
+
+export type DetailStatus = "Current" | "Temporary" | "Unsure" | "No longer current";
+
+export interface Detail {
+  id: string;
+  text: string;
+  source: DetailSource;
+  sourceName?: string;
+  status: DetailStatus;
+  dateAdded: string;
+  lastConfirmed: string;
+  confirmedBy: string;
+  reviewDate?: string;
+  archived?: boolean;
+  history?: { date: string; text: string }[];
+}
+
+export type DetailKey =
+  | "whatMatters"
+  | "communication"
+  | "comfort"
+  | "routines"
+  | "preferences"
+  | "coordination";
+
 export interface Person {
   id: string;
   name: string;
@@ -24,14 +54,13 @@ export interface Person {
   relationship: string;
   pronouns: string;
   photo?: string;
-  whatMatters: string[];
-  routines: string[];
-  likes: string[];
-  dislikes: string[];
-  communication: string[];
-  comfort: string[];
+  whatMatters: Detail[];
+  routines: Detail[];
+  preferences: Detail[];
+  communication: Detail[];
+  comfort: Detail[];
   updates: { id: string; date: string; text: string }[];
-  coordination: string[];
+  coordination: Detail[];
   voiceInvited: boolean;
   voiceEntries: { id: string; date: string; label: string; text: string }[];
 }
