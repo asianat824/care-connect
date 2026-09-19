@@ -100,20 +100,24 @@ export function Chip({
   selected,
   children,
   onClick,
+  className,
 }: {
   selected?: boolean;
   children: ReactNode;
   onClick?: () => void;
+  className?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={selected}
       className={cn(
-        "rounded-full border px-4 py-2 text-left text-base transition-colors",
+        "min-h-11 rounded-full border px-4 py-2 text-left text-base transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         selected
           ? "border-transparent bg-secondary text-secondary-foreground"
           : "border-border bg-card text-foreground hover:bg-muted",
+        className,
       )}
     >
       {children}
@@ -175,16 +179,19 @@ export function Tabs({
   onChange: (t: string) => void;
 }) {
   return (
-    <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+    <div className="-mx-1 flex flex-wrap gap-2 px-1 pb-1" role="tablist">
       {tabs.map((t) => (
         <button
           key={t}
+          type="button"
+          role="tab"
+          aria-selected={active === t}
           onClick={() => onChange(t)}
           className={cn(
             "whitespace-nowrap rounded-full px-4 py-2 text-base transition-colors",
             active === t
               ? "bg-primary text-primary-foreground"
-              : "border border-border bg-card text-muted-foreground hover:bg-muted",
+              : "border border-border bg-card text-foreground hover:bg-muted",
           )}
         >
           {t}

@@ -78,9 +78,9 @@ function HomePage() {
 
       <Card>
         <SectionTitle title="A quick capacity check-in" subtitle="Private. One tap." />
-        <div className="flex flex-wrap gap-2">
+        <div className="flex min-w-0 flex-wrap gap-2">
           {CAPACITIES.map((c) => (
-            <Chip key={c} selected={quick === c} onClick={() => saveQuick(c)}>
+            <Chip key={c} selected={quick === c} onClick={() => saveQuick(c)} className="max-w-full whitespace-normal">
               {c}
             </Chip>
           ))}

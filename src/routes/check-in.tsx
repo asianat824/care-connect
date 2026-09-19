@@ -120,12 +120,19 @@ function CheckInPage() {
         <Field label={`Energy today: ${energy} of 5`}>
           <input
             type="range"
+            aria-label="Energy level"
+            aria-valuetext={`${energy} out of 5`}
             min={1}
             max={5}
+            step={1}
             value={energy}
             onChange={(e) => setEnergy(Number(e.target.value))}
-            className="w-full accent-[var(--color-accent)]"
+            className="w-full accent-[var(--color-accent)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
           />
+          <div className="mt-2 flex justify-between text-sm font-medium text-muted-foreground" aria-hidden="true">
+            <span>Very low</span>
+            <span>Full</span>
+          </div>
         </Field>
 
         <div>

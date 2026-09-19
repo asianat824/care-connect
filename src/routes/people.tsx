@@ -116,7 +116,11 @@ function PeoplePage() {
                   </div>
                 </div>
                 {p.whatMatters[0] ? (
-                  <p className="mt-4 text-base text-muted-foreground">“{p.whatMatters[0]}”</p>
+                  <div className="mt-4 border-t border-border pt-4">
+                    <p className="text-sm font-semibold text-foreground">What matters to {p.name.split(" ")[0]}</p>
+                    <p className="mt-1 text-base text-foreground">“{p.whatMatters[0]}.”</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Shared by {p.name.split(" ")[0]}</p>
+                  </div>
                 ) : null}
               </Card>
             </Link>
@@ -243,18 +247,13 @@ function PersonDetail({ person }: { person: Person }) {
         <Button variant="connect" onClick={createHandoff}>
           Create warm handoff
         </Button>
-        {person.voiceInvited ? (
-          <Link to="/my-voice" search={{ person: person.id }}>
-            <Button variant="support">Open My Voice</Button>
-          </Link>
-        ) : (
-          <Button
-            variant="quiet"
-            onClick={() => update((p) => ({ ...p, voiceInvited: true }))}
-          >
-            Invite them to contribute
-          </Button>
-        )}
+        <Link
+          to="/my-voice"
+          search={{ person: person.id }}
+          onClick={() => update((p) => ({ ...p, voiceInvited: true }))}
+        >
+          <Button variant="support">Invite {person.name.split(" ")[0]} to add her voice</Button>
+        </Link>
       </div>
 
       {handoff ? (
@@ -366,7 +365,7 @@ function PersonDetail({ person }: { person: Person }) {
                   <li key={m.id} className="rounded-2xl border border-border p-4">
                     <div className="flex flex-wrap items-center gap-2">
                       <Tag tone="warm">{m.kind}</Tag>
-                      {m.fromPerson ? <Tag tone="sage">In their own words</Tag> : null}
+                      {m.fromPerson ? <Tag tone="sage">Shared by {person.name.split(" ")[0]}</Tag> : null}
                     </div>
                     <p className="mt-2 font-display text-xl">{m.title}</p>
                     <p className="text-base text-muted-foreground">{m.body}</p>
