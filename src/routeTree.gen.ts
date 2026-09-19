@@ -16,6 +16,7 @@ import { Route as CheckInRouteImport } from './routes/check-in'
 import { Route as MomentsRouteImport } from './routes/moments'
 import { Route as MyVoiceRouteImport } from './routes/my-voice'
 import { Route as PeopleRouteImport } from './routes/people'
+import { Route as CareSummaryPersonIdRouteImport } from './routes/care-summary.$personId'
 import { Route as VoiceGuestPersonIdRouteImport } from './routes/voice-guest.$personId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -53,6 +54,11 @@ const PeopleRoute = PeopleRouteImport.update({
   path: '/people',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CareSummaryPersonIdRoute = CareSummaryPersonIdRouteImport.update({
+  id: '/care-summary/$personId',
+  path: '/care-summary/$personId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VoiceGuestPersonIdRoute = VoiceGuestPersonIdRouteImport.update({
   id: '/voice-guest/$personId',
   path: '/voice-guest/$personId',
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/moments': typeof MomentsRoute
   '/my-voice': typeof MyVoiceRoute
   '/people': typeof PeopleRoute
+  '/care-summary/$personId': typeof CareSummaryPersonIdRoute
   '/voice-guest/$personId': typeof VoiceGuestPersonIdRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/moments': typeof MomentsRoute
   '/my-voice': typeof MyVoiceRoute
   '/people': typeof PeopleRoute
+  '/care-summary/$personId': typeof CareSummaryPersonIdRoute
   '/voice-guest/$personId': typeof VoiceGuestPersonIdRoute
 }
 export interface FileRoutesById {
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/moments': typeof MomentsRoute
   '/my-voice': typeof MyVoiceRoute
   '/people': typeof PeopleRoute
+  '/care-summary/$personId': typeof CareSummaryPersonIdRoute
   '/voice-guest/$personId': typeof VoiceGuestPersonIdRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/moments'
     | '/my-voice'
     | '/people'
+    | '/care-summary/$personId'
     | '/voice-guest/$personId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/moments'
     | '/my-voice'
     | '/people'
+    | '/care-summary/$personId'
     | '/voice-guest/$personId'
   id:
     | '__root__'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/moments'
     | '/my-voice'
     | '/people'
+    | '/care-summary/$personId'
     | '/voice-guest/$personId'
   fileRoutesById: FileRoutesById
 }
@@ -131,6 +143,7 @@ export interface RootRouteChildren {
   MomentsRoute: typeof MomentsRoute
   MyVoiceRoute: typeof MyVoiceRoute
   PeopleRoute: typeof PeopleRoute
+  CareSummaryPersonIdRoute: typeof CareSummaryPersonIdRoute
   VoiceGuestPersonIdRoute: typeof VoiceGuestPersonIdRoute
 }
 
@@ -185,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeopleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/care-summary/$personId': {
+      id: '/care-summary/$personId'
+      path: '/care-summary/$personId'
+      fullPath: '/care-summary/$personId'
+      preLoaderRoute: typeof CareSummaryPersonIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/voice-guest/$personId': {
       id: '/voice-guest/$personId'
       path: '/voice-guest/$personId'
@@ -203,6 +223,7 @@ const rootRouteChildren: RootRouteChildren = {
   MomentsRoute: MomentsRoute,
   MyVoiceRoute: MyVoiceRoute,
   PeopleRoute: PeopleRoute,
+  CareSummaryPersonIdRoute: CareSummaryPersonIdRoute,
   VoiceGuestPersonIdRoute: VoiceGuestPersonIdRoute,
 }
 export const routeTree = rootRouteImport
