@@ -100,3 +100,15 @@
   font-family: var(--font-display);
 }
 
+@media print {
+  @page { size: letter; margin: 0.45in; }
+  body { background: white; }
+  .print-controls { display: none !important; }
+  .care-summary { max-width: none; min-height: auto; padding: 0; }
+  .care-summary article { border: 0; padding: 0; box-shadow: none; }
+  .care-summary .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem 1.5rem; }
+  .care-summary h1 { font-size: 2rem; }
+  .care-summary h2 { font-size: 1.05rem; }
+  .care-summary p, .care-summary li { break-inside: avoid; }
+}
+

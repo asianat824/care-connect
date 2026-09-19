@@ -77,6 +77,7 @@ export interface Person {
     text: string;
     source?: "Direct guest response" | "Completed together";
   }[];
+  summaryDetailIds?: string[];
 }
 
 export type Permission =

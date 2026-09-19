@@ -392,6 +392,7 @@ function PersonDetail({ person }: { person: Person }) {
   const [recipient, setRecipient] = useState("");
   const [voiceText, setVoiceText] = useState("");
   const [voiceSection, setVoiceSection] = useState<DetailKey>("whatMatters");
+  const [summaryDialog, setSummaryDialog] = useState(false);
 
   const update = (fn: (p: Person) => Person) =>
     setState((s) => ({ ...s, people: s.people.map((p) => (p.id === person.id ? fn(p) : p)) }));
@@ -451,7 +452,19 @@ function PersonDetail({ person }: { person: Person }) {
     }));
   };
 
-  const firstName = person.preferredName || person.name.split(" ")[0] || person.name;
+  const firstName = person.name.split(" ")[0] || person.preferredName || person.name;
+  const summaryCandidates = DETAIL_SECTIONS.flatMap((key) =>
+    person[key]
+      .filter((detail) => !detail.archived && detail.status === "Current")
+      .map((detail) => ({ key, detail })),
+  );
+  const selectedSummaryIds = person.summaryDetailIds ?? summaryCandidates.map(({ detail }) => detail.id);
+  const toggleSummaryDetail = (id: string) => update((p) => ({
+    ...p,
+    summaryDetailIds: selectedSummaryIds.includes(id)
+      ? selectedSummaryIds.filter((detailId) => detailId !== id)
+      : [...selectedSummaryIds, id],
+  }));
   const sendVoiceRequest = () => {
     update((p) => ({
       ...p,
@@ -504,7 +517,24 @@ function PersonDetail({ person }: { person: Person }) {
         <Button variant="support" onClick={() => { setVoiceDialog(true); setVoiceChoice(null); }}>
           Add {firstName}’s voice
         </Button>
+        <Button variant="quiet" onClick={() => setSummaryDialog(true)}>
+          Print care summary
+        </Button>
       </div>
+
+      {summaryDialog ? (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-primary/35 p-0 sm:items-center sm:p-5" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setSummaryDialog(false); }}>
+          <div role="dialog" aria-modal="true" aria-labelledby="summary-dialog-title" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl border border-border bg-card p-5 shadow-xl sm:rounded-3xl sm:p-7">
+            <div className="flex items-start justify-between gap-4"><div><h2 id="summary-dialog-title" className="font-display text-3xl">Choose details for {firstName}’s care summary</h2><p className="mt-2 text-base text-muted-foreground">Only selected current details will appear. Private check-ins and personal notes are never included.</p></div><Button variant="ghost" className="shrink-0 px-3" aria-label="Close" onClick={() => setSummaryDialog(false)}>×</Button></div>
+            <div className="mt-6 space-y-5">{DETAIL_SECTIONS.map((key) => {
+              const options = summaryCandidates.filter((item) => item.key === key);
+              if (!options.length) return null;
+              return <fieldset key={key}><legend className="font-display text-xl">{SECTION_LABELS[key]}</legend><div className="mt-2 space-y-2">{options.map(({ detail }) => <label key={detail.id} className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-background p-3"><input type="checkbox" className="mt-1 size-5 accent-primary" checked={selectedSummaryIds.includes(detail.id)} onChange={() => toggleSummaryDetail(detail.id)} /><span><span className="block text-base">{detail.text}</span><span className="mt-1 block text-sm text-muted-foreground">{sourceLabel(detail, person, state.caregiverName)} · Confirmed {detail.lastConfirmed}</span></span></label>)}</div></fieldset>;
+            })}</div>
+            <div className="mt-6 flex flex-wrap gap-3"><Button variant="quiet" onClick={() => setSummaryDialog(false)}>Cancel</Button><Link to="/care-summary/$personId" params={{ personId: person.id }}><Button disabled={selectedSummaryIds.length === 0}>Open printable summary</Button></Link></div>
+          </div>
+        </div>
+      ) : null}
 
       {voiceDialog ? (
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-primary/35 p-0 sm:items-center sm:p-5" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setVoiceDialog(false); }}>
