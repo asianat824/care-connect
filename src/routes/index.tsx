@@ -40,7 +40,7 @@ function greeting() {
 function HomePage() {
   const { state, setState } = useStore();
   const [quick, setQuick] = useState<Capacity | null>(null);
-  const prompt = CONNECTION_PROMPTS[new Date().getDay() % CONNECTION_PROMPTS.length];
+  const prompt = CONNECTION_PROMPTS[new Date().getDay() % CONNECTION_PROMPTS.length] ?? "";
   const openRequests = state.requests.filter((r) => r.status !== "complete");
 
   const saveQuick = (c: Capacity) => {

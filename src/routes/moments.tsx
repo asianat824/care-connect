@@ -29,7 +29,7 @@ function MomentsPage() {
   const [personId, setPersonId] = useState(state.people[0]?.id ?? "");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const prompt = CONNECTION_PROMPTS[new Date().getDate() % CONNECTION_PROMPTS.length];
+  const prompt = CONNECTION_PROMPTS[new Date().getDate() % CONNECTION_PROMPTS.length] ?? "";
 
   const add = () => {
     if (!title.trim()) return;

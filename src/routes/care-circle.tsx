@@ -56,7 +56,7 @@ const PERMISSIONS: Permission[] = [
 
 function CareCirclePage() {
   const { state, setState } = useStore();
-  const [tab, setTab] = useState(TABS[0]);
+  const [tab, setTab] = useState(TABS[0] ?? "");
   const [inviting, setInviting] = useState(false);
   const [form, setForm] = useState({
     name: "",

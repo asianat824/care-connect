@@ -132,7 +132,7 @@ export function Tag({ children, tone = "muted" }: { children: ReactNode; tone?: 
   );
 }
 
-export function Avatar({ name, photo, size = 48 }: { name: string; photo?: string; size?: number }) {
+export function Avatar({ name, photo, size = 48 }: { name: string; photo?: string | undefined; size?: number | undefined }) {
   const initials = name
     .split(" ")
     .map((n) => n[0])

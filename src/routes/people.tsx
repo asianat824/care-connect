@@ -17,9 +17,7 @@ import { today, uid } from "@/lib/demo-data";
 import type { Person } from "@/lib/types";
 
 export const Route = createFileRoute("/people")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    person: typeof search.person === "string" ? search.person : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>) => ((typeof search["person"] === "string" ? { person: search["person"] as string } : {}) as { person?: string }),
   head: () => ({
     meta: [
       { title: "People I Care For — [PROJECT NAME]" },
@@ -68,7 +66,7 @@ function PeoplePage() {
         {
           id,
           name,
-          preferredName: name.split(" ")[0],
+          preferredName: name.split(" ")[0] ?? name,
           relationship,
           pronouns: "",
           whatMatters: [],
@@ -155,7 +153,7 @@ function PeoplePage() {
 
 function PersonDetail({ person }: { person: Person }) {
   const { state, setState } = useStore();
-  const [tab, setTab] = useState(SECTIONS[0]);
+  const [tab, setTab] = useState(SECTIONS[0] ?? "");
   const [draft, setDraft] = useState("");
   const [handoff, setHandoff] = useState<string | null>(null);
 

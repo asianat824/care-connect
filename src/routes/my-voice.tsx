@@ -5,9 +5,7 @@ import { useStore } from "@/lib/store";
 import { today, uid } from "@/lib/demo-data";
 
 export const Route = createFileRoute("/my-voice")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    person: typeof search.person === "string" ? search.person : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>) => ((typeof search["person"] === "string" ? { person: search["person"] as string } : {}) as { person?: string }),
   head: () => ({
     meta: [
       { title: "My Voice — [PROJECT NAME]" },
@@ -39,7 +37,7 @@ function MyVoicePage() {
   const { person } = Route.useSearch();
   const people = state.people.filter((p) => p.voiceInvited);
   const current = state.people.find((p) => p.id === person) ?? people[0];
-  const [question, setQuestion] = useState(QUESTIONS[0]);
+  const [question, setQuestion] = useState(QUESTIONS[0] ?? "");
   const [answer, setAnswer] = useState("");
   const [saved, setSaved] = useState(false);
 

@@ -44,7 +44,7 @@ function CheckInPage() {
   const [saved, setSaved] = useState(false);
 
   const [showRequest, setShowRequest] = useState(false);
-  const [type, setType] = useState(SUPPORT_TYPES[0]);
+  const [type, setType] = useState(SUPPORT_TYPES[0] ?? "");
   const [detail, setDetail] = useState("");
   const [by, setBy] = useState("");
   const [instructions, setInstructions] = useState("");
