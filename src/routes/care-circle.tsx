@@ -14,7 +14,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { useStore } from "@/lib/store";
-import { COMMUNITY_TOPICS, LOCAL_RESOURCES, today, uid } from "@/lib/demo-data";
+import { today, uid } from "@/lib/demo-data";
 import type { Permission } from "@/lib/types";
 
 export const Route = createFileRoute("/care-circle")({
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/care-circle")({
       {
         name: "description",
         content:
-          "Invite trusted people, share responsibilities, pass along warm handoffs, and find local support.",
+          "Invite trusted people, manage permissions, share requests and updates, and pass along warm handoffs.",
       },
       { property: "og:title", content: "My Care Circle — [PROJECT NAME]" },
       {
@@ -335,37 +335,6 @@ function CareCirclePage() {
         </div>
       )}
 
-      <section className="border-t border-border pt-8">
-        <SectionTitle title="More support" subtitle="Local information and lived experience when you need it." />
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div>
-            <h3 className="font-display text-xl">Local resources</h3>
-            <div className="mt-4 grid gap-4">
-          {LOCAL_RESOURCES.map((r) => (
-            <Card key={r.id}>
-              <p className="font-display text-xl">{r.name}</p>
-              <p className="mt-1 text-base text-muted-foreground">{r.note}</p>
-            </Card>
-          ))}
-            </div>
-          </div>
-          <div>
-            <h3 className="font-display text-xl">Community support</h3>
-            <p className="mt-2 text-base text-muted-foreground">
-              Sample conversations from other caregivers. Full community features come later.
-            </p>
-            <div className="mt-4 space-y-4">
-              {COMMUNITY_TOPICS.map((t) => (
-                <Card key={t.id}>
-                  <p className="font-display text-xl">{t.title}</p>
-                  <p className="mt-1 text-base text-muted-foreground">{t.snippet}</p>
-                  <p className="mt-3 text-sm text-muted-foreground">{t.replies} replies</p>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

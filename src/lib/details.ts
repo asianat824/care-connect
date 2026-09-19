@@ -2,10 +2,10 @@ import type { Detail, DetailKey, DetailSource, DetailStatus, Person } from "./ty
 import { today, uid } from "./demo-data";
 
 export const SOURCES: DetailSource[] = [
-  "They told me",
-  "I noticed",
-  "Someone else shared this",
-  "I should confirm",
+  "Recorded conversation",
+  "Caregiver observation",
+  "Care Circle member",
+  "Needs confirmation",
 ];
 
 export const STATUSES: DetailStatus[] = ["Current", "Temporary", "Unsure", "No longer current"];
@@ -59,12 +59,18 @@ export function reviewDateFor(choice: ReviewChoice, custom: string): string | un
 export function sourceLabel(detail: Detail, person: Person, caregiverName: string): string {
   const who = person.preferredName || person.name.split(" ")[0] || person.name;
   switch (detail.source) {
-    case "They told me":
-      return `Shared by ${who}`;
-    case "I noticed":
-      return `${caregiverName} noticed this`;
-    case "Someone else shared this":
-      return detail.sourceName ? `Shared by ${detail.sourceName}` : "Shared by someone in the circle";
+    case "Direct guest response":
+      return `Shared directly by ${who}`;
+    case "Completed together":
+      return `Added together with ${who}`;
+    case "Recorded conversation":
+      return `Recorded by ${caregiverName} from a conversation with ${who}`;
+    case "Caregiver observation":
+      return `Observed by ${caregiverName}`;
+    case "Care Circle member":
+      return detail.sourceName
+        ? `Shared by ${detail.sourceName}, a Care Circle member`
+        : "Shared by another Care Circle member";
     default:
       return "Needs confirmation";
   }
@@ -73,7 +79,7 @@ export function sourceLabel(detail: Detail, person: Person, caregiverName: strin
 export function makeDetail(partial: Partial<Detail> & { text: string; confirmedBy: string }): Detail {
   return {
     id: uid(),
-    source: "They told me",
+    source: "Recorded conversation",
     status: "Current",
     dateAdded: today(),
     lastConfirmed: today(),
