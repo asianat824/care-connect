@@ -38,12 +38,9 @@ export const Route = createFileRoute("/care-circle")({
 
 const TABS = [
   "Members",
-  "Requests for Help",
-  "Offers to Help",
-  "Care Updates",
-  "Warm Handoffs",
-  "Local Resources",
-  "Community Support",
+  "Requests",
+  "Updates",
+  "Handoffs",
 ];
 
 const PERMISSIONS: Permission[] = [
@@ -178,8 +175,9 @@ function CareCirclePage() {
         </div>
       )}
 
-      {tab === "Requests for Help" && (
+      {tab === "Requests" && (
         <div className="space-y-4">
+          <SectionTitle title="Requests for help" />
           {state.requests.length === 0 ? (
             <Empty
               title="No requests yet"
@@ -234,28 +232,26 @@ function CareCirclePage() {
               </Card>
             ))
           )}
+          <div className="pt-4">
+            <SectionTitle title="Offers to help" subtitle="Support your circle has offered without being asked." />
+            {state.offers.length === 0 ? (
+              <Empty title="No offers right now" body="Offers from your circle will show up here." />
+            ) : (
+              <div className="space-y-4">
+                {state.offers.map((o) => (
+                  <Card key={o.id}>
+                    <p className="text-sm text-muted-foreground">{o.from}</p>
+                    <p className="mt-1 text-lg">{o.text}</p>
+                    <Button variant="support" className="mt-4">Say yes, thank you</Button>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {tab === "Offers to Help" && (
-        <div className="space-y-4">
-          {state.offers.length === 0 ? (
-            <Empty title="No offers right now" body="Offers from your circle will show up here." />
-          ) : (
-            state.offers.map((o) => (
-              <Card key={o.id}>
-                <p className="text-sm text-muted-foreground">{o.from}</p>
-                <p className="mt-1 text-lg">{o.text}</p>
-                <Button variant="support" className="mt-4">
-                  Say yes, thank you
-                </Button>
-              </Card>
-            ))
-          )}
-        </div>
-      )}
-
-      {tab === "Care Updates" && (
+      {tab === "Updates" && (
         <div className="space-y-4">
           <Card className="space-y-3">
             <SectionTitle title="Share an update" subtitle="Goes to members who can view updates." />
@@ -284,10 +280,22 @@ function CareCirclePage() {
               <p className="mt-1 text-base">{u.text}</p>
             </Card>
           ))}
+          {state.people.flatMap((p) =>
+            p.voiceEntries.map((entry) => (
+              <Card key={`${p.id}-${entry.id}`}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Tag tone="sage">Shared by {p.name.split(" ")[0]}</Tag>
+                  <span className="text-sm text-muted-foreground">{entry.date}</span>
+                </div>
+                <p className="mt-2 text-sm font-semibold text-muted-foreground">{entry.label}</p>
+                <p className="mt-1 text-base">{entry.text}</p>
+              </Card>
+            )),
+          )}
         </div>
       )}
 
-      {tab === "Warm Handoffs" && (
+      {tab === "Handoffs" && (
         <div className="space-y-4">
           {state.handoffs.length === 0 ? (
             <Empty
@@ -325,31 +333,37 @@ function CareCirclePage() {
         </div>
       )}
 
-      {tab === "Local Resources" && (
-        <div className="grid gap-4 sm:grid-cols-2">
+      <section className="border-t border-border pt-8">
+        <SectionTitle title="More support" subtitle="Local information and lived experience when you need it." />
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div>
+            <h3 className="font-display text-xl">Local resources</h3>
+            <div className="mt-4 grid gap-4">
           {LOCAL_RESOURCES.map((r) => (
             <Card key={r.id}>
               <p className="font-display text-xl">{r.name}</p>
               <p className="mt-1 text-base text-muted-foreground">{r.note}</p>
             </Card>
           ))}
+            </div>
+          </div>
+          <div>
+            <h3 className="font-display text-xl">Community support</h3>
+            <p className="mt-2 text-base text-muted-foreground">
+              Sample conversations from other caregivers. Full community features come later.
+            </p>
+            <div className="mt-4 space-y-4">
+              {COMMUNITY_TOPICS.map((t) => (
+                <Card key={t.id}>
+                  <p className="font-display text-xl">{t.title}</p>
+                  <p className="mt-1 text-base text-muted-foreground">{t.snippet}</p>
+                  <p className="mt-3 text-sm text-muted-foreground">{t.replies} replies</p>
+                </Card>
+              ))}
+            </div>
+          </div>
         </div>
-      )}
-
-      {tab === "Community Support" && (
-        <div className="space-y-4">
-          <p className="text-base text-muted-foreground">
-            Sample conversations from other caregivers. Full community features come later.
-          </p>
-          {COMMUNITY_TOPICS.map((t) => (
-            <Card key={t.id}>
-              <p className="font-display text-xl">{t.title}</p>
-              <p className="mt-1 text-base text-muted-foreground">{t.snippet}</p>
-              <p className="mt-3 text-sm text-muted-foreground">{t.replies} replies</p>
-            </Card>
-          ))}
-        </div>
-      )}
+      </section>
     </div>
   );
 }

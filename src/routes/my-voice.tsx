@@ -25,11 +25,12 @@ export const Route = createFileRoute("/my-voice")({
 });
 
 const QUESTIONS = [
-  "How I am feeling today",
-  "How I would like people to talk with me",
-  "What I want help with",
-  "What I would enjoy doing",
-  "Something I want to remember",
+  "How I want people to communicate with me",
+  "What matters to me today",
+  "What I would like help with",
+  "Something I want to do or enjoy",
+  "A preference people should remember",
+  "A song, memory, story, or photo",
 ];
 
 function MyVoicePage() {
@@ -71,7 +72,7 @@ function MyVoicePage() {
           : p,
       ),
       moments:
-        question === "Something I want to remember"
+        question === "A song, memory, story, or photo"
           ? [
               {
                 id: uid(),
@@ -94,14 +95,15 @@ function MyVoicePage() {
   return (
     <div className="space-y-8 text-lg">
       <header>
-        <h1 className="font-display text-5xl leading-tight">My Voice</h1>
+        <p className="mb-2 text-base font-semibold text-muted-foreground">My Voice preview</p>
+        <h1 className="font-display text-5xl leading-tight">Your voice matters here.</h1>
         <p className="mt-3 text-xl text-muted-foreground">
-          This is {current.preferredName || current.name}'s space. Only they can add words here.
+          Share what helps you feel comfortable, respected, and connected.
         </p>
       </header>
 
       <Card className="space-y-6">
-        <p className="text-xl font-semibold">What would you like to say today?</p>
+        <p className="text-xl font-semibold">What would you like to share?</p>
         <div className="flex flex-col gap-3">
           {QUESTIONS.map((q) => (
             <Chip
@@ -125,14 +127,19 @@ function MyVoicePage() {
             placeholder="Say it however you like."
           />
         </Field>
-        <Button className="w-full py-4 text-xl" onClick={save}>
-          Save my words
-        </Button>
+        <div className="rounded-2xl border border-border bg-muted/60 p-4">
+          <p className="font-semibold text-foreground">Who can see this?</p>
+          <p className="mt-1 text-base text-muted-foreground">
+            Your caregiver and invited care circle members with permission can read what you share.
+            It will be clearly labeled as coming from you.
+          </p>
+        </div>
+        <Button className="w-full py-4 text-xl" onClick={save}>Share my words</Button>
         {saved ? <p className="text-lg text-secondary-foreground">Saved. Thank you.</p> : null}
       </Card>
 
       <Card>
-        <p className="font-display text-2xl">What will be shared</p>
+        <p className="font-display text-2xl">What you have shared</p>
         <p className="mt-2 text-lg text-muted-foreground">
           Your care circle can read these words. They are always marked as coming from you.
         </p>
@@ -142,7 +149,7 @@ function MyVoicePage() {
           <ul className="mt-4 space-y-3">
             {current.voiceEntries.map((v) => (
               <li key={v.id} className="rounded-2xl bg-muted/60 p-4">
-                <Tag tone="sage">In their own words</Tag>
+                  <Tag tone="sage">Shared by {current.name.split(" ")[0]}</Tag>
                 <p className="mt-2 text-base text-muted-foreground">
                   {v.label} · {v.date}
                 </p>
