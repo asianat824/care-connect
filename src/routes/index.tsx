@@ -3,7 +3,13 @@ import { useState } from "react";
 import { Avatar, Button, Card, Chip, Empty, SectionTitle, Tag } from "@/components/ui";
 import { useStore } from "@/lib/store";
 import { CONNECTION_PROMPTS, today, uid } from "@/lib/demo-data";
-import type { Capacity } from "@/lib/types";
+import {
+  addDays,
+  dueForReview,
+  monthsSince,
+  sourceLabel,
+} from "@/lib/details";
+import type { Capacity, Detail, DetailKey, Person } from "@/lib/types";
 
 export const Route = createFileRoute("/")({
   head: () => ({
