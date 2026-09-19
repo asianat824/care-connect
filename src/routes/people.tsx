@@ -566,6 +566,8 @@ function PersonDetail({ person }: { person: Person }) {
         </Card>
       ) : null}
 
+      <CurrentPriorities person={person} />
+
       {DETAIL_SECTIONS.map((key) => {
         const items = person[key].filter((d) => !d.archived);
         const title =
