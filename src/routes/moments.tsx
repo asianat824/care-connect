@@ -16,6 +16,8 @@ export const Route = createFileRoute("/moments")({
       },
       { property: "og:title", content: "Care Moments — [PROJECT NAME]" },
       { property: "og:description", content: "Connection is care. Songs, stories, and memories." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: MomentsPage,
@@ -29,6 +31,7 @@ function MomentsPage() {
   const [personId, setPersonId] = useState(state.people[0]?.id ?? "");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [filterPersonId, setFilterPersonId] = useState(state.people[0]?.id ?? "");
   const prompt = CONNECTION_PROMPTS[new Date().getDate() % CONNECTION_PROMPTS.length] ?? "";
 
   const add = () => {
@@ -54,6 +57,11 @@ function MomentsPage() {
 
   const nameFor = (id: string) =>
     state.people.find((p) => p.id === id)?.preferredName ?? "Someone";
+  const sharedNameFor = (id: string) =>
+    state.people.find((p) => p.id === id)?.name.split(" ")[0] ?? "them";
+  const visibleMoments = state.people.length > 1
+    ? state.moments.filter((m) => m.personId === filterPersonId)
+    : state.moments;
 
   return (
     <div className="space-y-8">
@@ -63,6 +71,23 @@ function MomentsPage() {
           Connection is care. A memory box for the parts of caregiving that aren't tasks.
         </p>
       </header>
+
+      {state.people.length > 1 ? (
+        <Field label="Whose care moments would you like to see?">
+          <select
+            value={filterPersonId}
+            onChange={(e) => {
+              setFilterPersonId(e.target.value);
+              setPersonId(e.target.value);
+            }}
+            className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-base text-foreground"
+          >
+            {state.people.map((p) => (
+              <option key={p.id} value={p.id}>{p.preferredName || p.name}</option>
+            ))}
+          </select>
+        </Field>
+      ) : null}
 
       <Card className="bg-accent/12">
         <SectionTitle title="This week's connection prompt" />
@@ -75,7 +100,7 @@ function MomentsPage() {
             setTitle(prompt);
           }}
         >
-          Answer it
+          Save a response
         </Button>
       </Card>
 
@@ -121,26 +146,29 @@ function MomentsPage() {
         <Button onClick={add}>Save this moment</Button>
       </Card>
 
-      {state.moments.length === 0 ? (
-        <Empty title="The memory box is empty" body="Start with a song you both know by heart." />
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {state.moments.map((m) => (
-            <Card key={m.id}>
-              <div className="flex flex-wrap items-center gap-2">
-                <Tag tone="warm">{m.kind}</Tag>
-                <Tag>{nameFor(m.personId)}</Tag>
-                {m.fromPerson ? <Tag tone="sage">In their own words</Tag> : null}
-              </div>
-              <p className="mt-3 font-display text-xl">{m.title}</p>
-              {m.body ? <p className="mt-1 text-base text-muted-foreground">{m.body}</p> : null}
-              <p className="mt-3 text-sm text-muted-foreground">
-                Added by {m.author} · {m.date}
-              </p>
-            </Card>
-          ))}
-        </div>
-      )}
+      <section>
+        <SectionTitle title="Memory collection" subtitle="Memories, songs, photos, stories, and activities gathered over time." />
+        {visibleMoments.length === 0 ? (
+          <Empty title="The memory box is empty" body="Start with a song you both know by heart." />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2" aria-live="polite">
+            {visibleMoments.map((m) => (
+              <Card key={m.id}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Tag tone="warm">{m.kind}</Tag>
+                  <Tag>{nameFor(m.personId)}</Tag>
+                  {m.fromPerson ? <Tag tone="sage">Shared by {sharedNameFor(m.personId)}</Tag> : null}
+                </div>
+                <p className="mt-3 font-display text-xl">{m.title}</p>
+                {m.body ? <p className="mt-1 text-base text-muted-foreground">{m.body}</p> : null}
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Added by {m.author} · {m.date}
+                </p>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

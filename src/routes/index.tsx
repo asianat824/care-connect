@@ -18,6 +18,8 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "A calm daily view for caregivers: capacity, people, requests, and care moments.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: HomePage,
@@ -78,9 +80,9 @@ function HomePage() {
 
       <Card>
         <SectionTitle title="A quick capacity check-in" subtitle="Private. One tap." />
-        <div className="flex flex-wrap gap-2">
+        <div className="flex min-w-0 flex-wrap gap-2">
           {CAPACITIES.map((c) => (
-            <Chip key={c} selected={quick === c} onClick={() => saveQuick(c)}>
+            <Chip key={c} selected={quick === c} onClick={() => saveQuick(c)} className="max-w-full whitespace-normal">
               {c}
             </Chip>
           ))}

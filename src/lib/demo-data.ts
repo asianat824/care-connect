@@ -198,6 +198,33 @@ export function seedState(): AppState {
         fromPerson: true,
         date: today(),
       },
+      {
+        id: "mo3",
+        personId: "p1",
+        kind: "Photo",
+        title: "Garden tomatoes",
+        body: "A sunny afternoon beside the garden she has tended for years.",
+        author: "Jordan",
+        date: today(),
+      },
+      {
+        id: "mo4",
+        personId: "p1",
+        kind: "Story",
+        title: "The Sunday hat story",
+        body: "She told us how she saved for her favorite blue hat and wore it every Sunday that spring.",
+        author: "Jordan",
+        date: today(),
+      },
+      {
+        id: "mo5",
+        personId: "p1",
+        kind: "Activity",
+        title: "Watering the herbs",
+        body: "A quiet ten minutes together after breakfast.",
+        author: "Jordan",
+        date: today(),
+      },
     ],
   };
 }
