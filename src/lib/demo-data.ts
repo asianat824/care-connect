@@ -1,8 +1,37 @@
-import type { AppState } from "./types";
+import type { AppState, Detail, DetailSource, DetailStatus } from "./types";
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
 
 export const today = () => new Date().toISOString().slice(0, 10);
+
+const addDays = (n: number) => {
+  const dt = new Date();
+  dt.setDate(dt.getDate() + n);
+  return dt.toISOString().slice(0, 10);
+};
+
+/** Small helper for readable fictional profile details. */
+function d(
+  id: string,
+  text: string,
+  source: DetailSource,
+  status: DetailStatus,
+  addedDaysAgo: number,
+  sourceName?: string,
+  reviewDate?: string,
+): Detail {
+  return {
+    id,
+    text,
+    source,
+    status,
+    dateAdded: addDays(-addedDaysAgo),
+    lastConfirmed: addDays(-addedDaysAgo),
+    confirmedBy: "Jordan",
+    ...(sourceName ? { sourceName } : {}),
+    ...(reviewDate ? { reviewDate } : {}),
+  };
+}
 
 export const PRIORITIES = [
   "Keeping important information together",
