@@ -197,27 +197,37 @@ function CheckBackSection() {
   );
 }
 
+const QUICK_MOODS: { label: string; Icon: typeof Smile; capacity: Capacity }[] = [
+  { label: "Good", Icon: Smile, capacity: "I have capacity" },
+  { label: "Okay", Icon: Meh, capacity: "I have capacity" },
+  { label: "Tired", Icon: Moon, capacity: "I am feeling stretched" },
+  { label: "Frustrated", Icon: Frown, capacity: "I am feeling stretched" },
+  { label: "Overwhelmed", Icon: CloudRain, capacity: "I am overwhelmed" },
+];
+
 function HomePage() {
   const { state, setState } = useStore();
-  const [quick, setQuick] = useState<Capacity | null>(null);
+  const [quick, setQuick] = useState<string | null>(null);
   const prompt = CONNECTION_PROMPTS[new Date().getDay() % CONNECTION_PROMPTS.length] ?? "";
-  const openRequests = state.requests.filter((r) => r.status !== "complete");
+  const openRequests = state.requests.filter(
+    (r) => r.status !== "Completed" && r.status !== "Cancelled",
+  );
 
-  const saveQuick = (c: Capacity) => {
-    setQuick(c);
+  const saveQuick = (mood: string, c: Capacity) => {
+    setQuick(mood);
     setState((s) => ({
       ...s,
       checkIns: [
         {
           id: uid(),
           date: today(),
-          mood: "",
+          mood,
           energy: 3,
           capacity: c,
           forMyself: "",
           needToday: "",
           outsideCapacity: "",
-          notes: "Quick capacity check-in",
+          notes: "Quick check-in",
           shared: false,
         },
         ...s.checkIns,
