@@ -27,7 +27,7 @@ export function Onboarding() {
             {
               id: uid(),
               name: personName.trim(),
-              preferredName: personName.trim().split(" ")[0],
+              preferredName: personName.trim().split(" ")[0] ?? personName.trim(),
               relationship: relationship.trim() || "Someone I care for",
               pronouns: "",
               whatMatters: [],
