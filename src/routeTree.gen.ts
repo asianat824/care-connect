@@ -10,33 +10,91 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CareCircleRouteImport } from './routes/care-circle'
+import { Route as CheckInRouteImport } from './routes/check-in'
+import { Route as MomentsRouteImport } from './routes/moments'
+import { Route as MyVoiceRouteImport } from './routes/my-voice'
+import { Route as PeopleRouteImport } from './routes/people'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CareCircleRoute = CareCircleRouteImport.update({
+  id: '/care-circle',
+  path: '/care-circle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckInRoute = CheckInRouteImport.update({
+  id: '/check-in',
+  path: '/check-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MomentsRoute = MomentsRouteImport.update({
+  id: '/moments',
+  path: '/moments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyVoiceRoute = MyVoiceRouteImport.update({
+  id: '/my-voice',
+  path: '/my-voice',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PeopleRoute = PeopleRouteImport.update({
+  id: '/people',
+  path: '/people',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/care-circle': typeof CareCircleRoute
+  '/check-in': typeof CheckInRoute
+  '/moments': typeof MomentsRoute
+  '/my-voice': typeof MyVoiceRoute
+  '/people': typeof PeopleRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/care-circle': typeof CareCircleRoute
+  '/check-in': typeof CheckInRoute
+  '/moments': typeof MomentsRoute
+  '/my-voice': typeof MyVoiceRoute
+  '/people': typeof PeopleRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/care-circle': typeof CareCircleRoute
+  '/check-in': typeof CheckInRoute
+  '/moments': typeof MomentsRoute
+  '/my-voice': typeof MyVoiceRoute
+  '/people': typeof PeopleRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    '/' | '/care-circle' | '/check-in' | '/moments' | '/my-voice' | '/people'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/care-circle' | '/check-in' | '/moments' | '/my-voice' | '/people'
+  id:
+    | '__root__'
+    | '/'
+    | '/care-circle'
+    | '/check-in'
+    | '/moments'
+    | '/my-voice'
+    | '/people'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CareCircleRoute: typeof CareCircleRoute
+  CheckInRoute: typeof CheckInRoute
+  MomentsRoute: typeof MomentsRoute
+  MyVoiceRoute: typeof MyVoiceRoute
+  PeopleRoute: typeof PeopleRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +106,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/care-circle': {
+      id: '/care-circle'
+      path: '/care-circle'
+      fullPath: '/care-circle'
+      preLoaderRoute: typeof CareCircleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/check-in': {
+      id: '/check-in'
+      path: '/check-in'
+      fullPath: '/check-in'
+      preLoaderRoute: typeof CheckInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/moments': {
+      id: '/moments'
+      path: '/moments'
+      fullPath: '/moments'
+      preLoaderRoute: typeof MomentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-voice': {
+      id: '/my-voice'
+      path: '/my-voice'
+      fullPath: '/my-voice'
+      preLoaderRoute: typeof MyVoiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/people': {
+      id: '/people'
+      path: '/people'
+      fullPath: '/people'
+      preLoaderRoute: typeof PeopleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CareCircleRoute: CareCircleRoute,
+  CheckInRoute: CheckInRoute,
+  MomentsRoute: MomentsRoute,
+  MyVoiceRoute: MyVoiceRoute,
+  PeopleRoute: PeopleRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
