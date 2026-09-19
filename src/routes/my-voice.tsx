@@ -5,7 +5,10 @@ import { useStore } from "@/lib/store";
 import { today, uid } from "@/lib/demo-data";
 
 export const Route = createFileRoute("/my-voice")({
-  validateSearch: (search: Record<string, unknown>) => ((typeof search["person"] === "string" ? { person: search["person"] as string } : {}) as { person?: string }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    ...(typeof search["person"] === "string" ? { person: search["person"] } : {}),
+    ...(search["mode"] === "together" ? { mode: "together" as const } : {}),
+  } as { person?: string; mode?: "together" }),
   head: () => ({
     meta: [
       { title: "My Voice — [PROJECT NAME]" },
@@ -37,7 +40,7 @@ const QUESTIONS = [
 
 function MyVoicePage() {
   const { state, setState } = useStore();
-  const { person } = Route.useSearch();
+  const { person, mode } = Route.useSearch();
   const people = state.people.filter((p) => p.voiceInvited);
   const current = state.people.find((p) => p.id === person) ?? people[0];
   const [question, setQuestion] = useState(QUESTIONS[0] ?? "");
@@ -67,7 +70,7 @@ function MyVoicePage() {
           ? {
               ...p,
               voiceEntries: [
-                { id: uid(), date: today(), label: question, text: answer.trim() },
+                { id: uid(), date: today(), label: question, text: answer.trim(), source: "Completed together" as const },
                 ...p.voiceEntries,
               ],
             }
@@ -132,8 +135,7 @@ function MyVoicePage() {
         <div className="rounded-2xl border border-border bg-muted/60 p-4">
           <p className="font-semibold text-foreground">Who can see this?</p>
           <p className="mt-1 text-base text-muted-foreground">
-            Your caregiver and invited care circle members with permission can read what you share.
-            It will be clearly labeled as coming from you.
+             Your caregiver will receive this response. It will be labeled as something you completed together.
           </p>
         </div>
         <Button className="w-full py-4 text-xl" onClick={save}>Share my words</Button>
@@ -151,7 +153,7 @@ function MyVoicePage() {
           <ul className="mt-4 space-y-3">
             {current.voiceEntries.map((v) => (
               <li key={v.id} className="rounded-2xl bg-muted/60 p-4">
-                  <Tag tone="sage">Shared by {current.name.split(" ")[0]}</Tag>
+                  <Tag tone="sage">{v.source === "Direct guest response" ? `Shared directly by ${current.preferredName || current.name.split(" ")[0]}` : `Added together with ${current.preferredName || current.name.split(" ")[0]}`}</Tag>
                 <p className="mt-2 text-base text-muted-foreground">
                   {v.label} · {v.date}
                 </p>

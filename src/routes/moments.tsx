@@ -157,7 +157,7 @@ function MomentsPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <Tag tone="warm">{m.kind}</Tag>
                   <Tag>{nameFor(m.personId)}</Tag>
-                  {m.fromPerson ? <Tag tone="sage">Shared by {sharedNameFor(m.personId)}</Tag> : null}
+                  {m.fromPerson ? <Tag tone="sage">Shared directly by {sharedNameFor(m.personId)}</Tag> : null}
                 </div>
                 <p className="mt-3 font-display text-xl">{m.title}</p>
                 {m.body ? <p className="mt-1 text-base text-muted-foreground">{m.body}</p> : null}

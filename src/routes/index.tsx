@@ -117,13 +117,17 @@ function CheckBackSection() {
               <p className="font-display text-xl">Is this still true for {person.name.split(" ")[0]}?</p>
               <p className="mt-2 text-base text-foreground">
                 {agoPhrase(detail)},{" "}
-                {detail.source === "They told me"
-                  ? `${who} said`
-                  : detail.source === "I noticed"
-                    ? "you noticed"
-                    : detail.source === "Someone else shared this"
-                      ? `${detail.sourceName ?? "someone in the circle"} shared`
-                      : "this was noted but not yet confirmed"}
+                {detail.source === "Direct guest response"
+                  ? `${who} shared directly`
+                  : detail.source === "Completed together"
+                    ? `you and ${who} added`
+                    : detail.source === "Recorded conversation"
+                      ? `you recorded from a conversation with ${who}`
+                      : detail.source === "Caregiver observation"
+                        ? "you observed"
+                        : detail.source === "Care Circle member"
+                          ? `${detail.sourceName ?? "someone in the Care Circle"} shared`
+                          : "this was noted but not yet confirmed"}
                 : “{detail.text}”
               </p>
               <p className="mt-1 text-sm text-muted-foreground">

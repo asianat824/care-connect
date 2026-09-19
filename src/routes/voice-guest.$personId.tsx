@@ -37,14 +37,14 @@ function GuestVoicePage() {
   const finish = (status: "submitted" | "declined") => {
     setState((s) => ({ ...s, people: s.people.map((p) => {
       if (p.id !== person.id) return p;
-      if (status === "declined") return { ...p, voiceRequest: p.voiceRequest ? { ...p.voiceRequest, status } : undefined };
+      if (status === "declined") return p.voiceRequest ? { ...p, voiceRequest: { ...p.voiceRequest, status } } : p;
       const completed = QUESTIONS.filter((q) => answers[q.label]?.trim());
       let next = { ...p };
       for (const q of completed) {
         const text = answers[q.label]?.trim() ?? "";
         next = { ...next, [q.key]: [{ id: uid(), text, source: "Direct guest response" as const, status: "Current" as const, dateAdded: today(), lastConfirmed: today(), confirmedBy: person.preferredName || person.name }, ...next[q.key]] };
       }
-      return { ...next, voiceInvited: true, voiceRequest: p.voiceRequest ? { ...p.voiceRequest, status } : undefined, voiceEntries: [...completed.map((q) => ({ id: uid(), date: today(), label: q.label, text: answers[q.label]?.trim() ?? "", source: "Direct guest response" as const })), ...p.voiceEntries] };
+      return { ...next, voiceInvited: true, ...(p.voiceRequest ? { voiceRequest: { ...p.voiceRequest, status } } : {}), voiceEntries: [...completed.map((q) => ({ id: uid(), date: today(), label: q.label, text: answers[q.label]?.trim() ?? "", source: "Direct guest response" as const })), ...p.voiceEntries] };
     }) }));
     setDone(status);
   };

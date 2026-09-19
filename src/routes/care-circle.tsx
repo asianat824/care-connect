@@ -286,7 +286,7 @@ function CareCirclePage() {
             p.voiceEntries.map((entry) => (
               <Card key={`${p.id}-${entry.id}`}>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Tag tone="sage">Shared by {p.name.split(" ")[0]}</Tag>
+                  <Tag tone="sage">{entry.source === "Direct guest response" ? `Shared directly by ${p.preferredName || p.name.split(" ")[0]}` : `Added together with ${p.preferredName || p.name.split(" ")[0]}`}</Tag>
                   <span className="text-sm text-muted-foreground">{entry.date}</span>
                 </div>
                 <p className="mt-2 text-sm font-semibold text-muted-foreground">{entry.label}</p>
