@@ -329,7 +329,9 @@ function HomePage() {
               <li key={r.id} className="rounded-2xl border border-border p-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <Tag tone="warm">{r.type}</Tag>
-                  <Tag>{r.status === "accepted" ? `Accepted by ${r.acceptedBy}` : "Waiting"}</Tag>
+                  <Tag>
+                    {r.status === "Accepted" ? `Accepted by ${r.acceptedBy}` : `Status: ${r.status}`}
+                  </Tag>
                 </div>
                 <p className="mt-2 text-base">{r.detail}</p>
               </li>
