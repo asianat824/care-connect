@@ -202,4 +202,12 @@ export interface AppState {
   networkQuestions?: { id: string; date: string; text: string }[];
   savedResourceIds?: string[];
   localSupportZip?: string;
+  tasks: Task[];
+  carePriorities: Priority[];
+  checkInDraft?: {
+    mood: string;
+    energy: number;
+    capacity: Capacity;
+    note: string;
+  };
 }
