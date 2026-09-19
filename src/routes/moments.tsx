@@ -16,6 +16,8 @@ export const Route = createFileRoute("/moments")({
       },
       { property: "og:title", content: "Care Moments — [PROJECT NAME]" },
       { property: "og:description", content: "Connection is care. Songs, stories, and memories." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: MomentsPage,
@@ -144,26 +146,29 @@ function MomentsPage() {
         <Button onClick={add}>Save this moment</Button>
       </Card>
 
-      {visibleMoments.length === 0 ? (
-        <Empty title="The memory box is empty" body="Start with a song you both know by heart." />
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {visibleMoments.map((m) => (
-            <Card key={m.id}>
-              <div className="flex flex-wrap items-center gap-2">
-                <Tag tone="warm">{m.kind}</Tag>
-                <Tag>{nameFor(m.personId)}</Tag>
-                {m.fromPerson ? <Tag tone="sage">Shared by {sharedNameFor(m.personId)}</Tag> : null}
-              </div>
-              <p className="mt-3 font-display text-xl">{m.title}</p>
-              {m.body ? <p className="mt-1 text-base text-muted-foreground">{m.body}</p> : null}
-              <p className="mt-3 text-sm text-muted-foreground">
-                Added by {m.author} · {m.date}
-              </p>
-            </Card>
-          ))}
-        </div>
-      )}
+      <section>
+        <SectionTitle title="Memory collection" subtitle="Memories, songs, photos, stories, and activities gathered over time." />
+        {visibleMoments.length === 0 ? (
+          <Empty title="The memory box is empty" body="Start with a song you both know by heart." />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2" aria-live="polite">
+            {visibleMoments.map((m) => (
+              <Card key={m.id}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Tag tone="warm">{m.kind}</Tag>
+                  <Tag>{nameFor(m.personId)}</Tag>
+                  {m.fromPerson ? <Tag tone="sage">Shared by {sharedNameFor(m.personId)}</Tag> : null}
+                </div>
+                <p className="mt-3 font-display text-xl">{m.title}</p>
+                {m.body ? <p className="mt-1 text-base text-muted-foreground">{m.body}</p> : null}
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Added by {m.author} · {m.date}
+                </p>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

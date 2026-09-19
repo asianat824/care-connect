@@ -31,6 +31,8 @@ export const Route = createFileRoute("/people")({
         property: "og:description",
         content: "Personhood first: preferences, routines, and warm handoffs.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: PeoplePage,
@@ -157,6 +159,7 @@ function PeoplePage() {
 
 function PersonDetail({ person }: { person: Person }) {
   const { state, setState } = useStore();
+  const navigate = useNavigate();
   const [tab, setTab] = useState(SECTIONS[0] ?? "");
   const [draft, setDraft] = useState("");
   const [handoff, setHandoff] = useState<string | null>(null);
@@ -247,13 +250,15 @@ function PersonDetail({ person }: { person: Person }) {
         <Button variant="connect" onClick={createHandoff}>
           Create warm handoff
         </Button>
-        <Link
-          to="/my-voice"
-          search={{ person: person.id }}
-          onClick={() => update((p) => ({ ...p, voiceInvited: true }))}
+        <Button
+          variant="support"
+          onClick={() => {
+            update((p) => ({ ...p, voiceInvited: true }));
+            navigate({ to: "/my-voice", search: { person: person.id } });
+          }}
         >
-          <Button variant="support">Invite {person.name.split(" ")[0]} to add her voice</Button>
-        </Link>
+          Invite {person.name.split(" ")[0]} to add her voice
+        </Button>
       </div>
 
       {handoff ? (

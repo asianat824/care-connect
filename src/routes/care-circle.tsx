@@ -31,6 +31,8 @@ export const Route = createFileRoute("/care-circle")({
         property: "og:description",
         content: "A trusted circle for requests, offers, updates, and warm handoffs.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: CareCirclePage,

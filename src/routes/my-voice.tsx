@@ -19,6 +19,8 @@ export const Route = createFileRoute("/my-voice")({
         property: "og:description",
         content: "In their own words: preferences, feelings, and memories.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: MyVoicePage,

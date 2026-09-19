@@ -19,6 +19,8 @@ export const Route = createFileRoute("/check-in")({
         property: "og:description",
         content: "Private check-ins for caregivers, with an easy way to turn a need into a request.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: CheckInPage,
