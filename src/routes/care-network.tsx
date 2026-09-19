@@ -52,12 +52,26 @@ const LOCAL = [
 ];
 const FILTERS = ["Online", "In person", "Free", "Evening", "Weekend"];
 
+/** Turns a private request into a general, privacy-safe peer question. */
+function generalise(privateText: string) {
+  const t = privateText.toLowerCase();
+  if (/drive|ride|transport|appointment/.test(t))
+    return "How have other caregivers found reliable transportation for weekday medical appointments?";
+  if (/grocer|shop|errand/.test(t))
+    return "How do other caregivers arrange help with groceries and errands during a busy week?";
+  if (/medic|prescription|refill|pharmac/.test(t))
+    return "How do other caregivers keep prescription pickups from falling only on them?";
+  if (/meal|cook|food/.test(t)) return "How do other caregivers manage meals on the hardest days?";
+  return "How have other caregivers found help with a regular caregiving responsibility when their own circle could not step in?";
+}
+
 function CareNetworkPage() {
   const { state, setState } = useStore();
-  const [tab, setTab] = useState("Peer Support");
+  const params = Route.useSearch();
+  const [tab, setTab] = useState(params.tab ?? "Peer Support");
   const [openConversation, setOpenConversation] = useState<string | null>(null);
-  const [asking, setAsking] = useState(false);
-  const [question, setQuestion] = useState("");
+  const [asking, setAsking] = useState(Boolean(params.ask));
+  const [question, setQuestion] = useState(params.ask ? generalise(params.ask) : "");
   const [search, setSearch] = useState("");
   const [resourceDetail, setResourceDetail] = useState<string | null>(null);
   const [zip, setZip] = useState(state.localSupportZip ?? "");
