@@ -5,6 +5,12 @@ import { today, uid } from "@/lib/demo-data";
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/care-network")({
+  validateSearch: (search: Record<string, unknown>) => {
+    const out: { tab?: string; ask?: string } = {};
+    if (typeof search["tab"] === "string") out.tab = search["tab"];
+    if (typeof search["ask"] === "string") out.ask = search["ask"];
+    return out;
+  },
   head: () => ({ meta: [
     { title: "Care Network — [PROJECT NAME]" },
     { name: "description", content: "Peer caregiver support, practical resources, and local programs beyond your immediate care circle." },
