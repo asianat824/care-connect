@@ -169,6 +169,52 @@ export function Empty({ title, body, action }: { title: string; body: string; ac
   );
 }
 
+export function Accordion({
+  id,
+  title,
+  subtitle,
+  open,
+  onToggle,
+  children,
+}: {
+  id: string;
+  title: string;
+  subtitle?: string;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-3xl border border-border bg-card">
+      <h2>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          aria-controls={`${id}-panel`}
+          id={`${id}-button`}
+          className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+        >
+          <span>
+            <span className="block font-display text-2xl text-foreground">{title}</span>
+            {subtitle ? (
+              <span className="mt-1 block text-base text-muted-foreground">{subtitle}</span>
+            ) : null}
+          </span>
+          <span className="shrink-0 text-sm font-medium text-foreground">
+            {open ? "Close −" : "Open +"}
+          </span>
+        </button>
+      </h2>
+      {open ? (
+        <div id={`${id}-panel`} role="region" aria-labelledby={`${id}-button`} className="border-t border-border px-6 py-6">
+          {children}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 export function Tabs({
   tabs,
   active,
