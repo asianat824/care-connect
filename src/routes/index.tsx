@@ -45,6 +45,146 @@ function greeting() {
   return "Good evening";
 }
 
+const DETAIL_KEYS: DetailKey[] = [
+  "whatMatters",
+  "communication",
+  "comfort",
+  "routines",
+  "preferences",
+  "coordination",
+];
+
+const isHealthRelated = (text: string) =>
+  /medicat|medicine|prescrib|prescription|pill|dose|dosage|pharmac/i.test(text);
+
+function agoPhrase(detail: Detail) {
+  const m = monthsSince(detail.lastConfirmed);
+  if (m <= 0) return "Recently";
+  if (m === 1) return "A month ago";
+  return `${m} months ago`;
+}
+
+function CheckBackSection() {
+  const { state, setState } = useStore();
+  const [later, setLater] = useState<string | null>(null);
+
+  const due: { person: Person; key: DetailKey; detail: Detail }[] = state.people.flatMap((person) =>
+    DETAIL_KEYS.flatMap((key) =>
+      person[key].filter(dueForReview).map((detail) => ({ person, key, detail })),
+    ),
+  );
+
+  if (due.length === 0) return null;
+
+  const patch = (personId: string, key: DetailKey, id: string, p: Partial<Detail>) =>
+    setState((s) => ({
+      ...s,
+      people: s.people.map((per) =>
+        per.id === personId
+          ? { ...per, [key]: per[key].map((d) => (d.id === id ? { ...d, ...p } : d)) }
+          : per,
+      ),
+    }));
+
+  const clearReview = (personId: string, key: DetailKey, id: string) =>
+    setState((s) => ({
+      ...s,
+      people: s.people.map((per) =>
+        per.id === personId
+          ? {
+              ...per,
+              [key]: per[key].map((d) => {
+                if (d.id !== id) return d;
+                const { reviewDate: _drop, ...rest } = d;
+                return { ...rest, lastConfirmed: today(), confirmedBy: s.caregiverName };
+              }),
+            }
+          : per,
+      ),
+    }));
+
+  return (
+    <Card>
+      <SectionTitle
+        title="Things to check back on"
+        subtitle="A gentle nudge, not a to-do list. Care means continuing to ask."
+      />
+      <ul className="space-y-4">
+        {due.map(({ person, key, detail }) => {
+          const who = person.preferredName || person.name.split(" ")[0] || person.name;
+          return (
+            <li key={detail.id} className="rounded-2xl border border-border bg-muted/40 p-4">
+              <p className="font-display text-xl">Is this still true for {person.name.split(" ")[0]}?</p>
+              <p className="mt-2 text-base text-foreground">
+                {agoPhrase(detail)}, {sourceLabel(detail, person, state.caregiverName).toLowerCase().startsWith("shared by") ? `${who} shared` : "you noted"}: “{detail.text}”
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {sourceLabel(detail, person, state.caregiverName)} · {detail.status} · Review date{" "}
+                {detail.reviewDate}
+              </p>
+              {isHealthRelated(detail.text) ? (
+                <p className="mt-2 rounded-2xl bg-secondary/25 px-3 py-2 text-sm text-foreground">
+                  This was last confirmed {agoPhrase(detail).toLowerCase()}. Check with the person or an
+                  appropriate care provider to make sure it is still current.
+                </p>
+              ) : null}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  variant="support"
+                  className="px-4 py-2 text-sm"
+                  onClick={() => clearReview(person.id, key, detail.id)}
+                >
+                  Still accurate
+                </Button>
+                <Link to="/people" search={{ person: person.id, detail: detail.id }}>
+                  <Button variant="quiet" className="px-4 py-2 text-sm">
+                    Update this
+                  </Button>
+                </Link>
+                <Button
+                  variant="quiet"
+                  className="px-4 py-2 text-sm"
+                  onClick={() => setLater(later === detail.id ? null : detail.id)}
+                >
+                  Ask again later
+                </Button>
+                <Button
+                  variant="quiet"
+                  className="px-4 py-2 text-sm"
+                  onClick={() => patch(person.id, key, detail.id, { archived: true })}
+                >
+                  Archive it
+                </Button>
+              </div>
+              {later === detail.id ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {[
+                    ["In one week", 7],
+                    ["In one month", 30],
+                    ["In three months", 90],
+                    ["In six months", 180],
+                  ].map(([label, days]) => (
+                    <Chip
+                      key={label as string}
+                      onClick={() => {
+                        patch(person.id, key, detail.id, { reviewDate: addDays(days as number) });
+                        setLater(null);
+                      }}
+                      className="max-w-full whitespace-normal"
+                    >
+                      {label as string}
+                    </Chip>
+                  ))}
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </Card>
+  );
+}
+
 function HomePage() {
   const { state, setState } = useStore();
   const [quick, setQuick] = useState<Capacity | null>(null);
