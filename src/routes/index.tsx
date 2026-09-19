@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { CloudRain, Frown, Meh, Moon, Smile } from "lucide-react";
 import { Avatar, Button, Card, Chip, Empty, SectionTitle, Tag } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import { CONNECTION_PROMPTS, today, uid } from "@/lib/demo-data";
 import {
