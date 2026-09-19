@@ -243,6 +243,8 @@ function HomePage() {
         </Link>
       </Card>
 
+      <CheckBackSection />
+
       <Card>
         <SectionTitle
           title="People I care for"
