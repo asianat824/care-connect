@@ -5,6 +5,7 @@
 - [x] Add Care Network navigation and page with peer, resource, and local support
 - [x] Remove Care Network content from My Care Circle
 - [ ] Verify privacy boundaries, accessibility, mobile/desktop layouts, and build
+- [ ] Add a printable one-page care summary for each person with selected current details and confirmation dates
 
 # Refinement roadmap
 
