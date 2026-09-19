@@ -247,17 +247,30 @@ function HomePage() {
       </header>
 
       <Card>
-        <SectionTitle title="A quick capacity check-in" subtitle="Private. One tap." />
-        <div className="flex min-w-0 flex-wrap gap-2">
-          {CAPACITIES.map((c) => (
-            <Chip key={c} selected={quick === c} onClick={() => saveQuick(c)} className="max-w-full whitespace-normal">
-              {c}
-            </Chip>
+        <SectionTitle title="Quick check-in" subtitle="One tap. Private by default." />
+        <p className="text-base font-medium">How are you feeling right now?</p>
+        <div className="mt-3 flex min-w-0 flex-wrap gap-2" role="group" aria-label="How are you feeling right now?">
+          {QUICK_MOODS.map(({ label, Icon, capacity }) => (
+            <button
+              key={label}
+              type="button"
+              aria-pressed={quick === label}
+              onClick={() => saveQuick(label, capacity)}
+              className={cn(
+                "flex min-w-[6rem] flex-1 flex-col items-center gap-2 rounded-2xl border px-4 py-4 text-base font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:flex-none",
+                quick === label
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card text-foreground hover:bg-muted",
+              )}
+            >
+              <Icon className="size-6" aria-hidden="true" />
+              <span>{label}</span>
+            </button>
           ))}
         </div>
         {quick ? (
           <p className="mt-4 text-base text-secondary-foreground">
-            Saved. Thank you for being honest with yourself.
+            Check-in saved. Nothing is shared unless you choose to share it.
           </p>
         ) : null}
         <Link to="/check-in" className="mt-5 block">
