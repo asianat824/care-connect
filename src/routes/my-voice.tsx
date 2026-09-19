@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button, Card, Chip, Empty, Field, Tag, Textarea } from "@/components/ui";
 import { useStore } from "@/lib/store";
 import { today, uid } from "@/lib/demo-data";
+import type { DetailKey } from "@/lib/types";
 
 export const Route = createFileRoute("/my-voice")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -29,13 +30,13 @@ export const Route = createFileRoute("/my-voice")({
   component: MyVoicePage,
 });
 
-const QUESTIONS = [
-  "How I want people to communicate with me",
-  "What matters to me today",
-  "What I would like help with",
-  "Something I want to do or enjoy",
-  "A preference people should remember",
-  "A song, memory, story, or photo",
+const QUESTIONS: { label: string; key: DetailKey }[] = [
+  { label: "What matters to you right now?", key: "whatMatters" },
+  { label: "How do you want people to communicate with you?", key: "communication" },
+  { label: "What helps you feel comfortable?", key: "comfort" },
+  { label: "Is there something you want your caregivers to remember?", key: "preferences" },
+  { label: "Has anything changed recently?", key: "coordination" },
+  { label: "Is there something you would enjoy doing together?", key: "preferences" },
 ];
 
 function MyVoicePage() {
@@ -43,7 +44,7 @@ function MyVoicePage() {
   const { person, mode } = Route.useSearch();
   const people = state.people.filter((p) => p.voiceInvited);
   const current = state.people.find((p) => p.id === person) ?? people[0];
-  const [question, setQuestion] = useState(QUESTIONS[0] ?? "");
+  const [question, setQuestion] = useState(QUESTIONS[0]?.label ?? "");
   const [answer, setAnswer] = useState("");
   const [saved, setSaved] = useState(false);
 
@@ -63,12 +64,18 @@ function MyVoicePage() {
 
   const save = () => {
     if (!answer.trim()) return;
+    const selectedQuestion = QUESTIONS.find((q) => q.label === question);
+    if (!selectedQuestion) return;
     setState((s) => ({
       ...s,
       people: s.people.map((p) =>
         p.id === current.id
           ? {
               ...p,
+              [selectedQuestion.key]: [
+                { id: uid(), text: answer.trim(), source: "Completed together" as const, status: "Current" as const, dateAdded: today(), lastConfirmed: today(), confirmedBy: s.caregiverName },
+                ...p[selectedQuestion.key],
+              ],
               voiceEntries: [
                 { id: uid(), date: today(), label: question, text: answer.trim(), source: "Completed together" as const },
                 ...p.voiceEntries,
@@ -76,22 +83,6 @@ function MyVoicePage() {
             }
           : p,
       ),
-      moments:
-        question === "A song, memory, story, or photo"
-          ? [
-              {
-                id: uid(),
-                personId: current.id,
-                kind: "Memory",
-                title: answer.trim().slice(0, 60),
-                body: answer.trim(),
-                author: current.preferredName || current.name,
-                fromPerson: true,
-                date: today(),
-              },
-              ...s.moments,
-            ]
-          : s.moments,
     }));
     setAnswer("");
     setSaved(true);
@@ -112,14 +103,14 @@ function MyVoicePage() {
         <div className="flex flex-col gap-3">
           {QUESTIONS.map((q) => (
             <Chip
-              key={q}
-              selected={question === q}
+              key={q.label}
+              selected={question === q.label}
               onClick={() => {
-                setQuestion(q);
+                setQuestion(q.label);
                 setSaved(false);
               }}
             >
-              <span className="text-lg">{q}</span>
+              <span className="text-lg">{q.label}</span>
             </Chip>
           ))}
         </div>

@@ -84,6 +84,8 @@ const SECTION_PLACEHOLDER: Record<DetailKey, string> = {
 const isHealthRelated = (text: string) =>
   /medicat|medicine|prescrib|prescription|pill|dose|dosage|pharmac/i.test(text);
 
+type VoiceChoice = "request" | "together" | "conversation" | "observation";
+
 function PeoplePage() {
   const { state, setState } = useStore();
   const { person } = Route.useSearch();
@@ -385,7 +387,7 @@ function PersonDetail({ person }: { person: Person }) {
   const [handoff, setHandoff] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const [voiceDialog, setVoiceDialog] = useState(false);
-  const [voiceChoice, setVoiceChoice] = useState<"request" | "together" | "conversation" | "observation" | null>(null);
+  const [voiceChoice, setVoiceChoice] = useState<VoiceChoice | null>(null);
   const [requestMethod, setRequestMethod] = useState<"Text message" | "Email" | "Copy private link">("Text message");
   const [recipient, setRecipient] = useState("");
   const [voiceText, setVoiceText] = useState("");
@@ -514,7 +516,7 @@ function PersonDetail({ person }: { person: Person }) {
                 ["together", "Complete this together", `Let ${firstName} answer on this device while you are together.`],
                 ["conversation", `Record what ${firstName} told me`, `Add something ${firstName} shared during a conversation.`],
                 ["observation", "Add my own observation", "Record something you noticed that may help you provide care."],
-              ].map(([value, title, description]) => <button key={value} type="button" onClick={() => setVoiceChoice(value as typeof voiceChoice)} className="rounded-2xl border border-border bg-background p-4 text-left transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"><span className="block text-lg font-semibold">{title}</span><span className="mt-1 block text-base text-muted-foreground">{description}</span></button>)}
+              ].map(([value, title, description]) => <button key={value} type="button" onClick={() => setVoiceChoice(value as VoiceChoice)} className="rounded-2xl border border-border bg-background p-4 text-left transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"><span className="block text-lg font-semibold">{title}</span><span className="mt-1 block text-base text-muted-foreground">{description}</span></button>)}
             </div> : null}
 
             {voiceChoice === "request" ? <div className="mt-6 space-y-5">
