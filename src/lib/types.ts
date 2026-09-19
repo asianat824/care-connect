@@ -18,10 +18,12 @@ export interface CheckIn {
 }
 
 export type DetailSource =
-  | "They told me"
-  | "I noticed"
-  | "Someone else shared this"
-  | "I should confirm";
+  | "Direct guest response"
+  | "Completed together"
+  | "Recorded conversation"
+  | "Caregiver observation"
+  | "Care Circle member"
+  | "Needs confirmation";
 
 export type DetailStatus = "Current" | "Temporary" | "Unsure" | "No longer current";
 
@@ -62,7 +64,20 @@ export interface Person {
   updates: { id: string; date: string; text: string }[];
   coordination: Detail[];
   voiceInvited: boolean;
-  voiceEntries: { id: string; date: string; label: string; text: string }[];
+  voiceRequest?: {
+    method: "Text message" | "Email" | "Copy private link";
+    recipient: string;
+    status: "waiting" | "submitted" | "declined";
+    sentAt: string;
+  };
+  voiceEntries: {
+    id: string;
+    date: string;
+    label: string;
+    text: string;
+    source?: "Direct guest response" | "Completed together";
+  }[];
+  summaryDetailIds?: string[];
 }
 
 export type Permission =
@@ -140,4 +155,7 @@ export interface AppState {
   updates: CareUpdate[];
   handoffs: Handoff[];
   moments: Moment[];
+  networkQuestions?: { id: string; date: string; text: string }[];
+  savedResourceIds?: string[];
+  localSupportZip?: string;
 }

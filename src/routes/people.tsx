@@ -84,6 +84,8 @@ const SECTION_PLACEHOLDER: Record<DetailKey, string> = {
 const isHealthRelated = (text: string) =>
   /medicat|medicine|prescrib|prescription|pill|dose|dosage|pharmac/i.test(text);
 
+type VoiceChoice = "request" | "together" | "conversation" | "observation";
+
 function PeoplePage() {
   const { state, setState } = useStore();
   const { person } = Route.useSearch();
@@ -212,7 +214,7 @@ function DetailForm({
 }) {
   const { state } = useStore();
   const [text, setText] = useState(initial?.text ?? "");
-  const [source, setSource] = useState<DetailSource>(initial?.source ?? "They told me");
+  const [source, setSource] = useState<DetailSource>(initial?.source ?? "Recorded conversation");
   const [sourceName, setSourceName] = useState(initial?.sourceName ?? "");
   const [status, setStatus] = useState<DetailStatus>(initial?.status ?? "Current");
   const [review, setReview] = useState<ReviewChoice>(
@@ -233,7 +235,7 @@ function DetailForm({
       dateAdded: initial?.dateAdded ?? today(),
       lastConfirmed: today(),
       confirmedBy: state.caregiverName,
-      ...(source === "Someone else shared this" && sourceName.trim()
+      ...(source === "Care Circle member" && sourceName.trim()
         ? { sourceName: sourceName.trim() }
         : {}),
       ...(reviewDate ? { reviewDate } : {}),
@@ -257,11 +259,17 @@ function DetailForm({
         <div className="mt-2 flex flex-wrap gap-2">
           {SOURCES.map((s) => (
             <Chip key={s} selected={source === s} onClick={() => setSource(s)} className="max-w-full whitespace-normal">
-              {s === "They told me" ? `${who} told me` : s}
+              {s === "Recorded conversation"
+                ? `${state.caregiverName} recorded this from a conversation with ${who}`
+                : s === "Caregiver observation"
+                  ? `Observed by ${state.caregiverName}`
+                  : s === "Care Circle member"
+                    ? "Shared by another Care Circle member"
+                    : "Needs confirmation"}
             </Chip>
           ))}
         </div>
-        {source === "Someone else shared this" ? (
+        {source === "Care Circle member" ? (
           <div className="mt-3">
             <Field label="Who shared it?">
               <Input value={sourceName} onChange={(e) => setSourceName(e.target.value)} placeholder="Marcus" />
@@ -338,7 +346,7 @@ function DetailCard({
     <li className="rounded-2xl border border-border bg-card p-4">
       <p className="text-base text-foreground">{detail.text}</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <Tag tone={detail.source === "I should confirm" ? "warm" : "sage"}>
+        <Tag tone={detail.source === "Needs confirmation" ? "warm" : "sage"}>
           {sourceLabel(detail, person, caregiverName)}
         </Tag>
         <Tag>{detail.status}</Tag>
@@ -378,6 +386,13 @@ function PersonDetail({ person }: { person: Person }) {
   const [draft, setDraft] = useState("");
   const [handoff, setHandoff] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [voiceDialog, setVoiceDialog] = useState(false);
+  const [voiceChoice, setVoiceChoice] = useState<VoiceChoice | null>(null);
+  const [requestMethod, setRequestMethod] = useState<"Text message" | "Email" | "Copy private link">("Text message");
+  const [recipient, setRecipient] = useState("");
+  const [voiceText, setVoiceText] = useState("");
+  const [voiceSection, setVoiceSection] = useState<DetailKey>("whatMatters");
+  const [summaryDialog, setSummaryDialog] = useState(false);
 
   const update = (fn: (p: Person) => Person) =>
     setState((s) => ({ ...s, people: s.people.map((p) => (p.id === person.id ? fn(p) : p)) }));
@@ -437,6 +452,42 @@ function PersonDetail({ person }: { person: Person }) {
     }));
   };
 
+  const firstName = person.name.split(" ")[0] || person.preferredName || person.name;
+  const summaryCandidates = DETAIL_SECTIONS.flatMap((key) =>
+    person[key]
+      .filter((detail) => !detail.archived && detail.status === "Current")
+      .map((detail) => ({ key, detail })),
+  );
+  const selectedSummaryIds = person.summaryDetailIds ?? summaryCandidates.map(({ detail }) => detail.id);
+  const toggleSummaryDetail = (id: string) => update((p) => ({
+    ...p,
+    summaryDetailIds: selectedSummaryIds.includes(id)
+      ? selectedSummaryIds.filter((detailId) => detailId !== id)
+      : [...selectedSummaryIds, id],
+  }));
+  const sendVoiceRequest = () => {
+    update((p) => ({
+      ...p,
+      voiceInvited: true,
+      voiceRequest: { method: requestMethod, recipient: recipient.trim() || "Private link copied", status: "waiting", sentAt: today() },
+    }));
+  };
+  const cancelVoiceRequest = () => update((p) => {
+    const { voiceRequest: _removed, ...rest } = p;
+    return { ...rest, voiceInvited: false };
+  });
+  const saveCaregiverVoiceDetail = () => {
+    if (!voiceText.trim()) return;
+    const source: DetailSource = voiceChoice === "observation" ? "Caregiver observation" : "Recorded conversation";
+    const detail: Detail = {
+      id: uid(), text: voiceText.trim(), source,
+      status: voiceChoice === "observation" ? "Unsure" : "Current",
+      dateAdded: today(), lastConfirmed: today(), confirmedBy: state.caregiverName,
+    };
+    saveDetail(voiceSection, detail);
+    setVoiceText(""); setVoiceChoice(null); setVoiceDialog(false);
+  };
+
   return (
     <div className="space-y-8">
       <Link to="/people" className="text-base underline underline-offset-4">
@@ -463,16 +514,50 @@ function PersonDetail({ person }: { person: Person }) {
         <Button variant="connect" onClick={createHandoff}>
           Create warm handoff
         </Button>
-        <Button
-          variant="support"
-          onClick={() => {
-            update((p) => ({ ...p, voiceInvited: true }));
-            navigate({ to: "/my-voice", search: { person: person.id } });
-          }}
-        >
-          Invite {person.name.split(" ")[0]} to add her voice
+        <Button variant="support" onClick={() => { setVoiceDialog(true); setVoiceChoice(null); }}>
+          Add {firstName}’s voice
+        </Button>
+        <Button variant="quiet" onClick={() => setSummaryDialog(true)}>
+          Print care summary
         </Button>
       </div>
+
+      {summaryDialog ? (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-primary/35 p-0 sm:items-center sm:p-5" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setSummaryDialog(false); }}>
+          <div role="dialog" aria-modal="true" aria-labelledby="summary-dialog-title" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl border border-border bg-card p-5 shadow-xl sm:rounded-3xl sm:p-7">
+            <div className="flex items-start justify-between gap-4"><div><h2 id="summary-dialog-title" className="font-display text-3xl">Choose details for {firstName}’s care summary</h2><p className="mt-2 text-base text-muted-foreground">Only selected current details will appear. Private check-ins and personal notes are never included.</p></div><Button variant="ghost" className="shrink-0 px-3" aria-label="Close" onClick={() => setSummaryDialog(false)}>×</Button></div>
+            <div className="mt-6 space-y-5">{DETAIL_SECTIONS.map((key) => {
+              const options = summaryCandidates.filter((item) => item.key === key);
+              if (!options.length) return null;
+              return <fieldset key={key}><legend className="font-display text-xl">{SECTION_LABELS[key]}</legend><div className="mt-2 space-y-2">{options.map(({ detail }) => <label key={detail.id} className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-background p-3"><input type="checkbox" className="mt-1 size-5 accent-primary" checked={selectedSummaryIds.includes(detail.id)} onChange={() => toggleSummaryDetail(detail.id)} /><span><span className="block text-base">{detail.text}</span><span className="mt-1 block text-sm text-muted-foreground">{sourceLabel(detail, person, state.caregiverName)} · Confirmed {detail.lastConfirmed}</span></span></label>)}</div></fieldset>;
+            })}</div>
+            <div className="mt-6 flex flex-wrap gap-3"><Button variant="quiet" onClick={() => setSummaryDialog(false)}>Cancel</Button><Link to="/care-summary/$personId" params={{ personId: person.id }}><Button disabled={selectedSummaryIds.length === 0}>Open printable summary</Button></Link></div>
+          </div>
+        </div>
+      ) : null}
+
+      {voiceDialog ? (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-primary/35 p-0 sm:items-center sm:p-5" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setVoiceDialog(false); }}>
+          <div role="dialog" aria-modal="true" aria-labelledby="voice-dialog-title" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl border border-border bg-card p-5 shadow-xl sm:rounded-3xl sm:p-7">
+            <div className="flex items-start justify-between gap-4"><div><h2 id="voice-dialog-title" className="font-display text-3xl">How would you like to add {firstName}’s voice?</h2><p className="mt-2 text-base text-muted-foreground">The caregiver owns the private space. {firstName} can still contribute an authentic voice.</p></div><Button variant="ghost" className="shrink-0 px-3" aria-label="Close" onClick={() => setVoiceDialog(false)}>×</Button></div>
+            {!voiceChoice ? <div className="mt-6 grid gap-3">
+              {[
+                ["request", `Send ${firstName} a private request`, `Send ${firstName} a limited link where she can share what matters to her. She will not see your private notes or check-ins.`],
+                ["together", "Complete this together", `Let ${firstName} answer on this device while you are together.`],
+                ["conversation", `Record what ${firstName} told me`, `Add something ${firstName} shared during a conversation.`],
+                ["observation", "Add my own observation", "Record something you noticed that may help you provide care."],
+              ].map(([value, title, description]) => <Button key={value} variant="quiet" onClick={() => setVoiceChoice(value as VoiceChoice)} className="h-auto w-full flex-col items-start rounded-2xl p-4 text-left"><span className="block text-lg font-semibold">{title}</span><span className="mt-1 block whitespace-normal text-base font-normal text-muted-foreground">{description}</span></Button>)}
+            </div> : null}
+
+            {voiceChoice === "request" ? <div className="mt-6 space-y-5">
+              {person.voiceRequest ? <Card className="bg-secondary/20"><Tag tone="sage">{person.voiceRequest.status === "waiting" ? `Waiting for ${firstName}’s response` : person.voiceRequest.status === "submitted" ? "Response received" : "Invitation declined"}</Tag><p className="mt-3 text-base text-muted-foreground">Sent by {person.voiceRequest.method} to {person.voiceRequest.recipient}.</p><div className="mt-4 flex flex-wrap gap-2"><Button variant="support" onClick={sendVoiceRequest}>Resend request</Button><Button variant="quiet" onClick={cancelVoiceRequest}>Cancel request</Button><Link to="/voice-guest/$personId" params={{ personId: person.id }}><Button variant="quiet">Open prototype link</Button></Link></div></Card> : <><fieldset><legend className="text-base font-medium">How should the request be sent?</legend><div className="mt-2 flex flex-wrap gap-2">{(["Text message", "Email", "Copy private link"] as const).map((m) => <Chip key={m} selected={requestMethod === m} onClick={() => setRequestMethod(m)}>{m}</Chip>)}</div></fieldset><Field label={requestMethod === "Text message" ? "Phone number" : requestMethod === "Email" ? "Email address" : "Private link recipient"}><Input value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder={requestMethod === "Text message" ? "(555) 014-0198" : requestMethod === "Email" ? "ruth@example.com" : firstName} /></Field><Button disabled={!recipient.trim()} onClick={sendVoiceRequest}>Send Request</Button></>}
+            </div> : null}
+            {voiceChoice === "together" ? <div className="mt-6"><p className="mb-4 text-base text-muted-foreground">Answers completed here will be labeled “Added together with {firstName}.”</p><Button onClick={() => navigate({ to: "/my-voice", search: { person: person.id, mode: "together" } })}>Start together</Button></div> : null}
+            {voiceChoice === "conversation" || voiceChoice === "observation" ? <div className="mt-6 space-y-4"><p className="rounded-2xl bg-muted/60 p-4 text-base">{voiceChoice === "conversation" ? `This will be labeled “Recorded by ${state.caregiverName} from a conversation with ${firstName}.”` : `This will be labeled “Observed by ${state.caregiverName}” and marked Unsure until confirmed by ${firstName}.`}</p><Field label="Where does this belong?"><select className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-base" value={voiceSection} onChange={(e) => setVoiceSection(e.target.value as DetailKey)}>{DETAIL_SECTIONS.map((k) => <option key={k} value={k}>{SECTION_LABELS[k]}</option>)}</select></Field><Field label="What would you like to remember?"><Textarea value={voiceText} onChange={(e) => setVoiceText(e.target.value)} /></Field><Button disabled={!voiceText.trim()} onClick={saveCaregiverVoiceDetail}>Save detail</Button></div> : null}
+            {voiceChoice ? <Button variant="ghost" className="mt-5 px-0" onClick={() => setVoiceChoice(null)}>← Back to choices</Button> : null}
+          </div>
+        </div>
+      ) : null}
 
       {handoff ? (
         <Card className="bg-accent/12">
@@ -600,7 +685,7 @@ function PersonDetail({ person }: { person: Person }) {
               <li key={m.id} className="rounded-2xl border border-border p-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <Tag tone="warm">{m.kind}</Tag>
-                  {m.fromPerson ? <Tag tone="sage">Shared by {person.name.split(" ")[0]}</Tag> : null}
+                  {m.fromPerson ? <Tag tone="sage">Shared directly by {firstName}</Tag> : null}
                 </div>
                 <p className="mt-2 font-display text-xl">{m.title}</p>
                 <p className="text-base text-muted-foreground">{m.body}</p>

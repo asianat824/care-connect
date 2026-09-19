@@ -3,9 +3,13 @@ import { useState } from "react";
 import { Button, Card, Chip, Empty, Field, Tag, Textarea } from "@/components/ui";
 import { useStore } from "@/lib/store";
 import { today, uid } from "@/lib/demo-data";
+import type { DetailKey } from "@/lib/types";
 
 export const Route = createFileRoute("/my-voice")({
-  validateSearch: (search: Record<string, unknown>) => ((typeof search["person"] === "string" ? { person: search["person"] as string } : {}) as { person?: string }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    ...(typeof search["person"] === "string" ? { person: search["person"] } : {}),
+    ...(search["mode"] === "together" ? { mode: "together" as const } : {}),
+  } as { person?: string; mode?: "together" }),
   head: () => ({
     meta: [
       { title: "My Voice — [PROJECT NAME]" },
@@ -26,13 +30,13 @@ export const Route = createFileRoute("/my-voice")({
   component: MyVoicePage,
 });
 
-const QUESTIONS = [
-  "How I want people to communicate with me",
-  "What matters to me today",
-  "What I would like help with",
-  "Something I want to do or enjoy",
-  "A preference people should remember",
-  "A song, memory, story, or photo",
+const QUESTIONS: { label: string; key: DetailKey }[] = [
+  { label: "What matters to you right now?", key: "whatMatters" },
+  { label: "How do you want people to communicate with you?", key: "communication" },
+  { label: "What helps you feel comfortable?", key: "comfort" },
+  { label: "Is there something you want your caregivers to remember?", key: "preferences" },
+  { label: "Has anything changed recently?", key: "coordination" },
+  { label: "Is there something you would enjoy doing together?", key: "preferences" },
 ];
 
 function MyVoicePage() {
@@ -40,7 +44,7 @@ function MyVoicePage() {
   const { person } = Route.useSearch();
   const people = state.people.filter((p) => p.voiceInvited);
   const current = state.people.find((p) => p.id === person) ?? people[0];
-  const [question, setQuestion] = useState(QUESTIONS[0] ?? "");
+  const [question, setQuestion] = useState(QUESTIONS[0]?.label ?? "");
   const [answer, setAnswer] = useState("");
   const [saved, setSaved] = useState(false);
 
@@ -60,35 +64,25 @@ function MyVoicePage() {
 
   const save = () => {
     if (!answer.trim()) return;
+    const selectedQuestion = QUESTIONS.find((q) => q.label === question);
+    if (!selectedQuestion) return;
     setState((s) => ({
       ...s,
       people: s.people.map((p) =>
         p.id === current.id
           ? {
               ...p,
+              [selectedQuestion.key]: [
+                { id: uid(), text: answer.trim(), source: "Completed together" as const, status: "Current" as const, dateAdded: today(), lastConfirmed: today(), confirmedBy: s.caregiverName },
+                ...p[selectedQuestion.key],
+              ],
               voiceEntries: [
-                { id: uid(), date: today(), label: question, text: answer.trim() },
+                { id: uid(), date: today(), label: question, text: answer.trim(), source: "Completed together" as const },
                 ...p.voiceEntries,
               ],
             }
           : p,
       ),
-      moments:
-        question === "A song, memory, story, or photo"
-          ? [
-              {
-                id: uid(),
-                personId: current.id,
-                kind: "Memory",
-                title: answer.trim().slice(0, 60),
-                body: answer.trim(),
-                author: current.preferredName || current.name,
-                fromPerson: true,
-                date: today(),
-              },
-              ...s.moments,
-            ]
-          : s.moments,
     }));
     setAnswer("");
     setSaved(true);
@@ -109,14 +103,14 @@ function MyVoicePage() {
         <div className="flex flex-col gap-3">
           {QUESTIONS.map((q) => (
             <Chip
-              key={q}
-              selected={question === q}
+              key={q.label}
+              selected={question === q.label}
               onClick={() => {
-                setQuestion(q);
+                setQuestion(q.label);
                 setSaved(false);
               }}
             >
-              <span className="text-lg">{q}</span>
+              <span className="text-lg">{q.label}</span>
             </Chip>
           ))}
         </div>
@@ -132,8 +126,7 @@ function MyVoicePage() {
         <div className="rounded-2xl border border-border bg-muted/60 p-4">
           <p className="font-semibold text-foreground">Who can see this?</p>
           <p className="mt-1 text-base text-muted-foreground">
-            Your caregiver and invited care circle members with permission can read what you share.
-            It will be clearly labeled as coming from you.
+             Your caregiver will receive this response. It will be labeled as something you completed together.
           </p>
         </div>
         <Button className="w-full py-4 text-xl" onClick={save}>Share my words</Button>
@@ -151,7 +144,7 @@ function MyVoicePage() {
           <ul className="mt-4 space-y-3">
             {current.voiceEntries.map((v) => (
               <li key={v.id} className="rounded-2xl bg-muted/60 p-4">
-                  <Tag tone="sage">Shared by {current.name.split(" ")[0]}</Tag>
+                  <Tag tone="sage">{v.source === "Direct guest response" ? `Shared directly by ${current.preferredName || current.name.split(" ")[0]}` : `Added together with ${current.preferredName || current.name.split(" ")[0]}`}</Tag>
                 <p className="mt-2 text-base text-muted-foreground">
                   {v.label} · {v.date}
                 </p>

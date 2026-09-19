@@ -1,6 +1,6 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { Heart, Home, HeartHandshake, Users, Sparkles, RotateCcw } from "lucide-react";
+import { Heart, Home, HeartHandshake, Users, Sparkles, RotateCcw, Network } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { Onboarding } from "./Onboarding";
 
@@ -9,13 +9,16 @@ const nav = [
   { to: "/check-in", label: "My Check-In", icon: Heart },
   { to: "/people", label: "People I Care For", icon: HeartHandshake },
   { to: "/care-circle", label: "My Care Circle", icon: Users },
+  { to: "/care-network", label: "Care Network", icon: Network },
   { to: "/moments", label: "Care Moments", icon: Sparkles },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { state, reset, ready } = useStore();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   if (!ready) return null;
+  if (pathname.startsWith("/voice-guest/")) return <>{children}</>;
   if (!state.onboarded) return <Onboarding />;
 
   return (
@@ -56,7 +59,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="mx-auto w-full max-w-4xl px-5 py-8 md:py-12">{children}</main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-border bg-card/95 backdrop-blur md:hidden">
+       <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-6 border-t border-border bg-card/95 backdrop-blur md:hidden">
         {nav.map(({ to, label, icon: Icon }) => (
           <Link
             key={to}
@@ -64,10 +67,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             activeOptions={{ exact: to === "/" }}
             activeProps={{ className: "text-accent-foreground" }}
             inactiveProps={{ className: "text-muted-foreground" }}
-            className="flex flex-col items-center gap-1 px-1 py-3 text-[11px] leading-tight"
+            aria-label={label}
+            className="min-w-0 flex flex-col items-center gap-1 px-0.5 py-3 text-[10px] leading-tight"
           >
             <Icon size={20} />
-            <span className="text-center">{label.replace("People I Care For", "People")}</span>
+            <span className="text-center">{label.replace("People I Care For", "People").replace("My Care Circle", "Circle").replace("Care Network", "Network")}</span>
           </Link>
         ))}
       </nav>
