@@ -116,7 +116,15 @@ function CheckBackSection() {
             <li key={detail.id} className="rounded-2xl border border-border bg-muted/40 p-4">
               <p className="font-display text-xl">Is this still true for {person.name.split(" ")[0]}?</p>
               <p className="mt-2 text-base text-foreground">
-                {agoPhrase(detail)}, {sourceLabel(detail, person, state.caregiverName).toLowerCase().startsWith("shared by") ? `${who} shared` : "you noted"}: “{detail.text}”
+                {agoPhrase(detail)},{" "}
+                {detail.source === "They told me"
+                  ? `${who} said`
+                  : detail.source === "I noticed"
+                    ? "you noticed"
+                    : detail.source === "Someone else shared this"
+                      ? `${detail.sourceName ?? "someone in the circle"} shared`
+                      : "this was noted but not yet confirmed"}
+                : “{detail.text}”
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {sourceLabel(detail, person, state.caregiverName)} · {detail.status} · Review date{" "}
