@@ -186,53 +186,252 @@ function CareCirclePage() {
               body="Requests start in your check-in, when something feels outside your capacity."
             />
           ) : (
-            state.requests.map((r) => (
-              <Card key={r.id}>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Tag tone="warm">{r.type}</Tag>
-                  <Tag>
-                    {r.status === "complete"
-                      ? "Complete"
-                      : r.status === "accepted"
-                        ? `Accepted by ${r.acceptedBy}`
-                        : "Waiting for someone"}
-                  </Tag>
-                </div>
-                <p className="mt-3 text-lg">{r.detail}</p>
-                {r.by ? <p className="text-base text-muted-foreground">Needed by {r.by}</p> : null}
-                {r.instructions ? (
-                  <p className="mt-2 text-base text-muted-foreground">{r.instructions}</p>
-                ) : null}
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Visible to:{" "}
-                  {r.visibleTo
-                    .map((id) => state.members.find((m) => m.id === id)?.name)
-                    .filter(Boolean)
-                    .join(", ") || "no one yet"}
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {r.status === "open" &&
-                    r.visibleTo.map((id) => {
-                      const m = state.members.find((x) => x.id === id);
-                      if (!m) return null;
-                      return (
-                        <Button
-                          key={id}
-                          variant="support"
-                          onClick={() => setRequest(r.id, { status: "accepted", acceptedBy: m.name })}
-                        >
-                          Accept as {m.name}
-                        </Button>
-                      );
-                    })}
-                  {r.status === "accepted" ? (
-                    <Button variant="quiet" onClick={() => setRequest(r.id, { status: "complete" })}>
-                      Mark complete
-                    </Button>
+            state.requests.map((r) => {
+              const declined = r.declinedBy ?? [];
+              const stuck = r.status === "Declined" || r.status === "No response";
+              const person = state.people.find((p) => p.id === r.personId);
+              return (
+                <Card key={r.id} className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Tag tone="warm">{r.type}</Tag>
+                    <Tag>Status: {r.status}</Tag>
+                    {r.status === "Accepted" && r.acceptedBy ? <Tag tone="sage">Accepted by {r.acceptedBy}</Tag> : null}
+                    {person ? <Tag>For {person.preferredName || person.name}</Tag> : null}
+                  </div>
+                  <p className="text-lg">{r.detail}</p>
+                  {r.by ? <p className="text-base text-muted-foreground">Needed by {r.by}</p> : null}
+                  {r.instructions ? (
+                    <p className="text-base text-muted-foreground">{r.instructions}</p>
                   ) : null}
-                </div>
-              </Card>
-            ))
+                  <p className="text-sm text-muted-foreground">
+                    Sent to{" "}
+                    {r.visibleTo
+                      .map((id) => state.members.find((m) => m.id === id)?.name)
+                      .filter(Boolean)
+                      .join(", ") || "no one yet"}
+                    {r.sentAt ? ` on ${r.sentAt}` : ""}
+                  </p>
+                  {declined.length ? (
+                    <p className="text-sm text-muted-foreground">Declined by {declined.join(", ")}.</p>
+                  ) : null}
+                  {(r.questions ?? []).map((q) => (
+                    <p key={q.id} className="rounded-2xl bg-muted p-3 text-base">
+                      <strong>{q.from} asked:</strong> {q.text}
+                    </p>
+                  ))}
+
+                  <div className="flex flex-wrap gap-2">
+                    {(r.status === "Sent" || r.status === "Draft") &&
+                      r.visibleTo.map((id) => {
+                        const m = state.members.find((x) => x.id === id);
+                        if (!m || declined.includes(m.name)) return null;
+                        return (
+                          <div key={id} className="flex flex-wrap gap-2">
+                            <Button
+                              variant="support"
+                              className="px-4 py-2 text-sm"
+                              onClick={() => setRequest(r.id, { status: "Accepted", acceptedBy: m.name })}
+                            >
+                              Accept as {m.name}
+                            </Button>
+                            <Button
+                              variant="quiet"
+                              className="px-4 py-2 text-sm"
+                              onClick={() => {
+                                const rest = r.visibleTo.filter((x) => x !== id);
+                                setRequest(r.id, {
+                                  declinedBy: [...declined, m.name],
+                                  status: rest.length ? "Sent" : "Declined",
+                                });
+                              }}
+                            >
+                              Decline as {m.name}
+                            </Button>
+                            <Button
+                              variant="quiet"
+                              className="px-4 py-2 text-sm"
+                              onClick={() =>
+                                setRequest(r.id, {
+                                  questions: [
+                                    ...(r.questions ?? []),
+                                    { id: uid(), from: m.name, text: "What time works best?" },
+                                  ],
+                                })
+                              }
+                            >
+                              Ask a question as {m.name}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    {r.status === "Sent" ? (
+                      <Button
+                        variant="ghost"
+                        className="px-4 py-2 text-sm"
+                        onClick={() => setRequest(r.id, { status: "No response" })}
+                      >
+                        Mark as no response
+                      </Button>
+                    ) : null}
+                    {r.status === "Accepted" ? (
+                      <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setRequest(r.id, { status: "Completed" })}>
+                        Mark complete
+                      </Button>
+                    ) : null}
+                    {r.status !== "Completed" && r.status !== "Cancelled" ? (
+                      <Button variant="ghost" className="px-4 py-2 text-sm" onClick={() => setRequest(r.id, { status: "Cancelled" })}>
+                        Cancel request
+                      </Button>
+                    ) : null}
+                  </div>
+
+                  {stuck ? (
+                    <div className="rounded-2xl border border-border bg-muted/50 p-4">
+                      <p className="font-display text-xl">No one has taken this yet.</p>
+                      <Button className="mt-3" onClick={() => setStuckOpen(stuckOpen === r.id ? null : r.id)}>
+                        I still need help
+                      </Button>
+                      {stuckOpen === r.id ? (
+                        <div className="mt-4 space-y-3">
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              "Ask another Care Circle member",
+                              "Change the request",
+                              "Divide it into smaller tasks",
+                            ].map((label) => (
+                              <Chip
+                                key={label}
+                                selected={stuckAction === label}
+                                onClick={() => setStuckAction(stuckAction === label ? null : label)}
+                                className="max-w-full whitespace-normal"
+                              >
+                                {label}
+                              </Chip>
+                            ))}
+                            <Link to="/care-network" search={{ tab: "Caregiver Resources" }}>
+                              <Chip>Find outside support</Chip>
+                            </Link>
+                            <Link to="/care-network" search={{ tab: "Peer Support", ask: r.detail }}>
+                              <Chip>Ask the Care Network</Chip>
+                            </Link>
+                          </div>
+
+                          {stuckAction === "Ask another Care Circle member" ? (
+                            <div className="space-y-2">
+                              <p className="text-base">
+                                People who declined are hidden. You can still choose them if you want to ask again.
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {state.members
+                                  .filter((m) => showDeclined || !declined.includes(m.name))
+                                  .map((m) => (
+                                    <Chip
+                                      key={m.id}
+                                      onClick={() =>
+                                        setRequest(r.id, {
+                                          visibleTo: [m.id],
+                                          status: "Sent",
+                                          sentAt: today(),
+                                        })
+                                      }
+                                      className="max-w-full whitespace-normal"
+                                    >
+                                      Send to {m.name}
+                                    </Chip>
+                                  ))}
+                              </div>
+                              <Button variant="ghost" className="px-3 py-2 text-sm" onClick={() => setShowDeclined(!showDeclined)}>
+                                {showDeclined ? "Hide people who declined" : "Show people who declined"}
+                              </Button>
+                            </div>
+                          ) : null}
+
+                          {stuckAction === "Change the request" ? (
+                            <div className="space-y-3">
+                              <Field label="What do you need?">
+                                <Textarea
+                                  value={editDetail || r.detail}
+                                  onChange={(e) => setEditDetail(e.target.value)}
+                                />
+                              </Field>
+                              <Field label="Instructions or timing">
+                                <Textarea
+                                  value={editInstructions || r.instructions}
+                                  onChange={(e) => setEditInstructions(e.target.value)}
+                                />
+                              </Field>
+                              <Button
+                                onClick={() => {
+                                  setRequest(r.id, {
+                                    detail: editDetail || r.detail,
+                                    instructions: editInstructions || r.instructions,
+                                    status: "Sent",
+                                    sentAt: today(),
+                                  });
+                                  setEditDetail("");
+                                  setEditInstructions("");
+                                  setStuckAction(null);
+                                }}
+                              >
+                                Save and send again
+                              </Button>
+                            </div>
+                          ) : null}
+
+                          {stuckAction === "Divide it into smaller tasks" ? (
+                            <div className="space-y-3">
+                              {[0, 1, 2].map((i) => (
+                                <Field key={i} label={`Smaller request ${i + 1}`}>
+                                  <Input
+                                    value={split[i] ?? ""}
+                                    onChange={(e) => {
+                                      const next = [...split];
+                                      next[i] = e.target.value;
+                                      setSplit(next);
+                                    }}
+                                    placeholder={
+                                      ["Confirm transportation", "Attend the appointment", "Pick up medication afterward"][i]
+                                    }
+                                  />
+                                </Field>
+                              ))}
+                              <Button
+                                disabled={!split.some((x) => x?.trim())}
+                                onClick={() => {
+                                  const parts = split.filter((x) => x?.trim());
+                                  setState((s) => ({
+                                    ...s,
+                                    requests: [
+                                      ...parts.map((text) => ({
+                                        id: uid(),
+                                        type: r.type,
+                                        detail: text.trim(),
+                                        by: r.by,
+                                        instructions: r.instructions,
+                                        visibleTo: [],
+                                        status: "Draft" as const,
+                                        ...(r.personId ? { personId: r.personId } : {}),
+                                      })),
+                                      ...s.requests.map((x) =>
+                                        x.id === r.id ? { ...x, status: "Cancelled" as const } : x,
+                                      ),
+                                    ],
+                                  }));
+                                  setSplit(["", "", ""]);
+                                  setStuckAction(null);
+                                }}
+                              >
+                                Create smaller requests
+                              </Button>
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </Card>
+              );
+            })
           )}
           <div className="pt-4">
             <SectionTitle title="Offers to help" subtitle="Support your circle has offered without being asked." />
