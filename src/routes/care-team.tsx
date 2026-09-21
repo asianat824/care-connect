@@ -2,7 +2,11 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Avatar, Button, Card, Chip, Empty, Field, Input, SectionTitle, Tabs, Tag, Textarea } from "@/components/ui";
 import { HandoffForm } from "@/components/PaidHome";
-import { sourceLabel } from "@/lib/details";
+import {
+  PersonProfile,
+  PROFILE_SECTIONS,
+  type ProfileSection,
+} from "@/components/PeopleCareExperience";
 import { today, uid } from "@/lib/demo-data";
 import { useStore } from "@/lib/store";
 
@@ -43,6 +47,9 @@ export const Route = createFileRoute("/care-team")({
       ...(search["tab"] ? { tab } : {}),
       ...(typeof search["person"] === "string" ? { person: search["person"] } : {}),
       ...(search["handoff"] === "new" ? { handoff: "new" as const } : {}),
+      ...(PROFILE_SECTIONS.includes(search["section"] as ProfileSection)
+        ? { section: search["section"] as ProfileSection }
+        : {}),
     };
   },
   head: () => ({
@@ -74,7 +81,12 @@ function CareTeamPage() {
         </p>
       </header>
       <Tabs tabs={[...TABS]} active={tab} onChange={(value) => setTab(value as TeamTab)} />
-      {tab === "People I Support" ? <PeopleSupport {...(search.person ? { personId: search.person } : {})} /> : null}
+      {tab === "People I Support" ? (
+        <PeopleSupport
+          {...(search.person ? { personId: search.person } : {})}
+          {...(search.section ? { section: search.section } : {})}
+        />
+      ) : null}
       {tab === "Work Team" ? <WorkTeam /> : null}
       {tab === "Handoff Notes" ? <HandoffNotes startOpen={search.handoff === "new"} /> : null}
     </div>
