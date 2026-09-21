@@ -70,6 +70,7 @@ function CheckInPage() {
     setState((s) => ({ ...s, checkInDraft: { ...draft, ...patch } }));
   const [saved, setSaved] = useState(false);
   const [supportChoice, setSupportChoice] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const saveCheckIn = () => {
     setState((s) => ({
