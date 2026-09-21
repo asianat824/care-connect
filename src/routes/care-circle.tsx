@@ -193,7 +193,11 @@ function CareCirclePage() {
           next = next.map((resp) =>
             resp.memberId === memberId || resp.status === "Declined"
               ? resp
-              : { ...resp, status: "Covered by another person" as const, note: undefined },
+              : {
+                  ...resp,
+                  status: "Covered by another person" as const,
+                  note: "Someone else is covering this",
+                },
           );
         }
         const accepted = next.find((resp) => resp.status === "Accepted");
