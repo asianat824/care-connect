@@ -246,7 +246,7 @@ function CareCirclePage() {
           ) : (
             state.requests.map((r) => {
               const declined = r.declinedBy ?? [];
-              const stuck = r.status === "Declined" || r.status === "No response";
+              const stuck = overallStatus(r) === "Unfilled";
               const person = state.people.find((p) => p.id === r.personId);
               return (
                 <Card key={r.id} className="space-y-3">
