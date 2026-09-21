@@ -286,7 +286,33 @@ function WorkTeam() {
 }
 
 function HandoffNotes({ startOpen }: { startOpen: boolean }) {
-  const { state } = useStore();
+  const { state, setState } = useStore();
+  const navigate = useNavigate();
+  const [discussed, setDiscussed] = useState<string | null>(null);
+
+  /** Links a handoff to the ongoing conversation without changing the handoff itself. */
+  const discuss = (noteId: string, personId: string, message: string) => {
+    setState((current) => ({
+      ...current,
+      conversations: [
+        {
+          id: uid(),
+          personId,
+          type: "Follow-up" as const,
+          message,
+          author: "Alicia Boateng",
+          authorRole: "Paid caregiver",
+          createdAt: today(),
+          visibleTo: "Jordan (Family caregiver), Alicia Boateng (Paid caregiver)",
+          status: "Open" as const,
+          replies: [],
+          fromHandoffId: noteId,
+        },
+        ...(current.conversations ?? []),
+      ],
+    }));
+    setDiscussed(noteId);
+  };
   const [open, setOpen] = useState(startOpen);
   const [sent, setSent] = useState(false);
   const [showSent, setShowSent] = useState(true);
@@ -295,7 +321,7 @@ function HandoffNotes({ startOpen }: { startOpen: boolean }) {
       <div className="flex flex-wrap gap-2"><Button onClick={() => setOpen(true)}>Complete end-of-shift handoff</Button><Button variant="quiet" onClick={() => setShowSent((value) => !value)}>View sent handoffs</Button></div>
       {open ? <Card><SectionTitle title="Complete end-of-shift handoff" subtitle="Share an observation, not a diagnosis." /><HandoffForm onDone={() => { setOpen(false); setSent(true); setShowSent(true); }} /></Card> : null}
       {sent ? <p className="rounded-2xl bg-secondary/25 p-4 text-secondary-foreground">Handoff sent to Jordan.</p> : null}
-      {showSent ? <Card><SectionTitle title="Mama Ruth’s handoff history" />{state.handoffNotes.length === 0 ? <Empty title="No handoffs yet" body="Completed handoffs will appear here." /> : <ul className="space-y-4">{state.handoffNotes.map((note) => <li key={note.id} className="rounded-2xl border border-border p-4"><div className="flex flex-wrap gap-2"><Tag tone="sage">{note.personName}</Tag><Tag>{note.submittedAt}</Tag><Tag tone="warm">Urgency: {note.urgency}</Tag><Tag>{note.reviewed ? "Reviewed by Jordan" : `Recipient: ${note.sharedWith}`}</Tag></div><p className="mt-3"><span className="font-semibold">Care completed: </span>{note.careCompleted.join(", ") || "—"}</p><p className="mt-2"><span className="font-semibold">Observations: </span>{note.noticed}</p><p className="mt-2"><span className="font-semibold">Follow-up needs: </span>{note.followUp}</p>{note.preferenceChange !== "No change" ? <p className="mt-2"><span className="font-semibold">Confirmed preferences: </span>{note.preferenceNote}</p> : null}</li>)}</ul>}</Card> : null}
+      {showSent ? <Card><SectionTitle title="Mama Ruth’s handoff history" />{state.handoffNotes.length === 0 ? <Empty title="No handoffs yet" body="Completed handoffs will appear here." /> : <ul className="space-y-4">{state.handoffNotes.map((note) => <li key={note.id} className="rounded-2xl border border-border p-4"><div className="flex flex-wrap gap-2"><Tag tone="sage">{note.personName}</Tag><Tag>{note.submittedAt}</Tag><Tag tone="warm">Urgency: {note.urgency}</Tag><Tag>{note.reviewed ? "Reviewed by Jordan" : `Recipient: ${note.sharedWith}`}</Tag></div><p className="mt-3"><span className="font-semibold">Care completed: </span>{note.careCompleted.join(", ") || "—"}</p><p className="mt-2"><span className="font-semibold">Observations: </span>{note.noticed}</p><p className="mt-2"><span className="font-semibold">Follow-up needs: </span>{note.followUp}</p>{note.preferenceChange !== "No change" ? <p className="mt-2"><span className="font-semibold">Confirmed preferences: </span>{note.preferenceNote}</p> : null}<div className="mt-3 flex flex-wrap gap-2"><Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => discuss(note.id, note.personId, `From my handoff on ${note.submittedAt}: ${note.followUp || note.noticed}`)}>Discuss in Shared Care Conversation</Button>{discussed === note.id ? <Button variant="ghost" className="px-4 py-2 text-sm" onClick={() => navigate({ to: "/care-team", search: { tab: "People I Support", person: note.personId, section: "Shared Care Conversation" } })}>Open the conversation</Button> : null}</div>{discussed === note.id ? <p className="mt-2 text-sm text-secondary-foreground">Added to the Shared Care Conversation. The handoff note is unchanged.</p> : null}</li>)}</ul>}</Card> : null}
     </div>
   );
 }
