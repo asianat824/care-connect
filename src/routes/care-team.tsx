@@ -5,12 +5,12 @@ import { useStore } from "@/lib/store";
 export const Route = createFileRoute("/care-team")({
   head: () => ({
     meta: [
-      { title: "Care Team — Connection Is Care" },
+      { title: "Care Team — Connected Care" },
       {
         name: "description",
         content: "The people coordinating care alongside you, and how to reach them.",
       },
-      { property: "og:title", content: "Care Team — Connection Is Care" },
+      { property: "og:title", content: "Care Team — Connected Care" },
       {
         property: "og:description",
         content: "Who to contact and what each person handles.",

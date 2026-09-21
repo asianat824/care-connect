@@ -79,13 +79,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "[PROJECT NAME] — Care for them without losing yourself" },
+      { title: "Connected Care — Care for them without losing yourself" },
       {
         name: "description",
         content:
           "A warm space for unpaid caregivers to check in with themselves, remember what matters, and coordinate care with people they trust.",
       },
-      { property: "og:title", content: "[PROJECT NAME] — Connection is care" },
+      { property: "og:title", content: "Connected Care — Connection is care" },
       {
         property: "og:description",
         content: "Support, memory, and coordination for family and friend caregivers.",

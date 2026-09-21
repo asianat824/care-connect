@@ -49,7 +49,7 @@ export function Onboarding() {
     <div className="flex min-h-screen items-center justify-center px-5 py-12">
       <div className="w-full max-w-xl">
         <p className="mb-6 text-center font-display text-lg text-muted-foreground">
-          [PROJECT NAME]
+          Connected Care
         </p>
 
         {step === 0 && (

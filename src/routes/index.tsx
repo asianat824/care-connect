@@ -17,12 +17,12 @@ import { PaidHome } from "@/components/PaidHome";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Home — [PROJECT NAME]" },
+      { title: "Home — Connected Care" },
       {
         name: "description",
         content: "Your calm daily view: how you're holding up, who needs you, and what's next.",
       },
-      { property: "og:title", content: "Home — [PROJECT NAME]" },
+      { property: "og:title", content: "Home — Connected Care" },
       {
         property: "og:description",
         content: "A calm daily view for caregivers: capacity, people, requests, and care moments.",

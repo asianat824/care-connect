@@ -7,12 +7,12 @@ import { HandoffForm } from "@/components/PaidHome";
 export const Route = createFileRoute("/handoff-notes")({
   head: () => ({
     meta: [
-      { title: "Handoff Notes — Connection Is Care" },
+      { title: "Handoff Notes — Connected Care" },
       {
         name: "description",
         content: "End-of-shift handoffs a paid caregiver has shared with the family caregiver.",
       },
-      { property: "og:title", content: "Handoff Notes — Connection Is Care" },
+      { property: "og:title", content: "Handoff Notes — Connected Care" },
       {
         property: "og:description",
         content: "Respectful end-of-shift handoffs shared with consent.",

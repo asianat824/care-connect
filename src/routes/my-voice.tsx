@@ -12,13 +12,13 @@ export const Route = createFileRoute("/my-voice")({
   } as { person?: string; mode?: "together" }),
   head: () => ({
     meta: [
-      { title: "My Voice — [PROJECT NAME]" },
+      { title: "My Voice — Connected Care" },
       {
         name: "description",
         content:
           "A simple, accessible space for the person receiving care to share preferences, feelings, and memories in their own words.",
       },
-      { property: "og:title", content: "My Voice — [PROJECT NAME]" },
+      { property: "og:title", content: "My Voice — Connected Care" },
       {
         property: "og:description",
         content: "In their own words: preferences, feelings, and memories.",

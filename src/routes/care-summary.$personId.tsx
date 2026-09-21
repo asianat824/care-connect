@@ -6,9 +6,9 @@ import type { DetailKey } from "@/lib/types";
 
 export const Route = createFileRoute("/care-summary/$personId")({
   head: () => ({ meta: [
-    { title: "Printable Care Summary — [PROJECT NAME]" },
+    { title: "Printable Care Summary — Connected Care" },
     { name: "description", content: "A concise, printable summary of selected current care details, preferences, routines, and confirmation dates." },
-    { property: "og:title", content: "Printable Care Summary — [PROJECT NAME]" },
+    { property: "og:title", content: "Printable Care Summary — Connected Care" },
     { property: "og:description", content: "Selected current details that help someone feel understood." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
@@ -35,7 +35,7 @@ function CareSummaryPage() {
         if (!details.length) return null;
         return <section key={key} className={key === "whatMatters" || key === "communication" ? "sm:col-span-2" : ""}><h2 className="font-display text-xl">{SECTION_LABELS[key]}</h2><ul className="mt-2 space-y-3">{details.map(({ detail }) => <li key={detail.id} className="border-l-2 border-secondary pl-3"><p className="text-base leading-snug">{detail.text}</p><div className="mt-1 flex flex-wrap items-center gap-2"><Tag tone={detail.source === "Needs confirmation" ? "warm" : "sage"}>{sourceLabel(detail, person, state.caregiverName)}</Tag><span className="text-xs text-muted-foreground">Confirmed {detail.lastConfirmed}</span></div></li>)}</ul></section>;
       })}</div>
-      <footer className="mt-6 border-t border-border pt-4 text-xs text-muted-foreground"><p>Prepared from [PROJECT NAME]. This is a care reminder, not a medical record. Last printed {new Date().toLocaleDateString()}.</p></footer>
+      <footer className="mt-6 border-t border-border pt-4 text-xs text-muted-foreground"><p>Prepared from Connected Care. This is a care reminder, not a medical record. Last printed {new Date().toLocaleDateString()}.</p></footer>
     </article>
   </main>;
 }
