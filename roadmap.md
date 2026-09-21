@@ -44,3 +44,9 @@
 - [x] Care Moments moved inside the profile; removed from both sidebars; /moments redirects
 - [x] Handoff notes can be linked into the Shared Care Conversation
 - [x] Care Connect drafts reviewed by AI to remove identifying details
+
+## Family support organization
+- [ ] Split unpaid Care Circle members from professional Care Team members
+- [ ] Require invitation category and route new members to the selected family tab
+- [ ] Group delegated request recipients by Care Circle and Care Team
+- [ ] Verify family mobile/desktop behavior, paid workspace regression, and build
