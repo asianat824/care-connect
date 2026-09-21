@@ -52,6 +52,6 @@
 - [x] Verify family mobile/desktop behavior, paid workspace regression, and build
 
 ## Paid Ruth profile organization
-- [ ] Add the paid-only Care Circle profile tab in the requested order
-- [ ] Move approved Jordan, Marcus, and Denise information and actions into the tab
-- [ ] Verify paid profile behavior, family profile regression, mobile layout, and build
+- [x] Add the paid-only Care Circle profile tab in the requested order
+- [x] Move approved Jordan, Marcus, and Denise information and actions into the tab
+- [x] Verify paid profile behavior, family profile regression, mobile layout, and build

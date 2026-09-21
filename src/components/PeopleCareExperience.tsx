@@ -368,6 +368,7 @@ function DetailCard({
 export const PROFILE_SECTIONS = [
   "Current priorities",
   "What matters",
+  "Care Circle",
   "Shared Care Conversation",
   "Care Moments",
 ] as const;
@@ -380,16 +381,20 @@ export function PersonProfile({
   initialSection,
   backLink,
   extraHeader,
+  careCircleContent,
 }: {
   person: Person;
   detailParam?: string;
   initialSection?: ProfileSection;
   backLink?: ReactNode;
   extraHeader?: ReactNode;
+  careCircleContent?: ReactNode;
 }) {
   const { state, setState } = useStore();
   const navigate = useNavigate();
-  const [section, setSection] = useState<ProfileSection>(initialSection ?? "Current priorities");
+  const [section, setSection] = useState<ProfileSection>(
+    initialSection === "Care Circle" && !careCircleContent ? "Current priorities" : initialSection ?? "Current priorities",
+  );
   const [openForm, setOpenForm] = useState<DetailKey | null>(null);
   const [editing, setEditing] = useState<string | null>(detailParam ?? null);
   const [draft, setDraft] = useState("");
@@ -519,9 +524,14 @@ export function PersonProfile({
     setSection("What matters");
   };
 
-  const tabLabels = PROFILE_SECTIONS.map((value) =>
-    value === "What matters" ? `What matters to ${firstName}` : value,
-  );
+  const availableSections = PROFILE_SECTIONS.filter((value) => value !== "Care Circle" || Boolean(careCircleContent));
+  const labelForSection = (value: ProfileSection) =>
+    value === "Current priorities"
+      ? "Current Priorities"
+      : value === "What matters"
+        ? `What Matters to ${firstName}`
+        : value;
+  const tabLabels = availableSections.map(labelForSection);
 
   return (
     <div className="space-y-8">
@@ -552,15 +562,17 @@ export function PersonProfile({
 
       <Tabs
         tabs={tabLabels}
-        active={section === "What matters" ? `What matters to ${firstName}` : section}
+        active={labelForSection(section)}
         onChange={(value) => {
           const index = tabLabels.indexOf(value);
-          const next = PROFILE_SECTIONS[index];
+          const next = availableSections[index];
           if (next) setSection(next);
         }}
       />
 
       {section === "Current priorities" ? <CurrentPriorities person={person} /> : null}
+
+      {section === "Care Circle" ? careCircleContent : null}
 
       {section === "Shared Care Conversation" ? (
         <SharedCareConversation person={person} onAddToProfile={addEntryToProfile} />
