@@ -234,6 +234,8 @@ export interface Moment {
   title: string;
   body: string;
   author: string;
+  authorRole?: string;
+  visibleTo?: string;
   fromPerson?: boolean;
   date: string;
 }
@@ -298,6 +300,7 @@ export interface AppState {
   localSupportZip?: string;
   tasks: Task[];
   carePriorities: Priority[];
+  conversations?: ConversationEntry[];
   checkInDraft?: {
     mood: string;
     energy: number;
