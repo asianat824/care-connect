@@ -500,32 +500,155 @@ function CareCirclePage() {
       {tab === "Care Updates" && (
         <div className="space-y-4">
           <Card className="space-y-3">
-            <SectionTitle title="Share an update" subtitle="Goes to members who can view updates." />
-            <Textarea value={updateText} onChange={(e) => setUpdateText(e.target.value)} />
-            <Button
-              onClick={() => {
-                if (!updateText.trim()) return;
-                setState((s) => ({
-                  ...s,
-                  updates: [
-                    { id: uid(), from: s.caregiverName, date: today(), text: updateText.trim() },
-                    ...s.updates,
-                  ],
-                }));
-                setUpdateText("");
-              }}
-            >
-              Post update
-            </Button>
+            <SectionTitle
+              title={editingUpdateId ? "Edit this update" : "Share an update"}
+              subtitle="Goes to members who can view updates."
+            />
+            <Field label="Who is this update about?">
+              <select
+                value={updateSubject}
+                onChange={(e) => setUpdateSubject(e.target.value)}
+                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-base text-foreground"
+              >
+                {state.people.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.preferredName || p.name}
+                  </option>
+                ))}
+                <option value="general">General Care Circle update</option>
+              </select>
+            </Field>
+            <p className="text-sm text-muted-foreground">
+              Subject: {updateSubject === "general"
+                ? "General Care Circle"
+                : `About ${subjectName(updateSubject)}`}
+            </p>
+            <Textarea
+              value={updateText}
+              onChange={(e) => setUpdateText(e.target.value)}
+              aria-label="Update text"
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={() => {
+                  if (!updateText.trim()) return;
+                  const personPatch =
+                    updateSubject === "general" ? {} : { personId: updateSubject };
+                  if (editingUpdateId) {
+                    const id = editingUpdateId;
+                    setState((s) => ({
+                      ...s,
+                      updates: s.updates.map((u) =>
+                        u.id === id
+                          ? { id: u.id, from: u.from, date: u.date, text: updateText.trim(), ...personPatch }
+                          : u,
+                      ),
+                    }));
+                    setEditingUpdateId(null);
+                  } else {
+                    setState((s) => ({
+                      ...s,
+                      updates: [
+                        {
+                          id: uid(),
+                          from: s.caregiverName,
+                          date: today(),
+                          text: updateText.trim(),
+                          ...personPatch,
+                        },
+                        ...s.updates,
+                      ],
+                    }));
+                  }
+                  setUpdateText("");
+                }}
+              >
+                {editingUpdateId ? "Save changes" : "Post update"}
+              </Button>
+              {editingUpdateId ? (
+                <Button
+                  variant="quiet"
+                  onClick={() => {
+                    setEditingUpdateId(null);
+                    setUpdateText("");
+                  }}
+                >
+                  Cancel
+                </Button>
+              ) : null}
+            </div>
           </Card>
-          {state.updates.map((u) => (
-            <Card key={u.id}>
-              <p className="text-sm text-muted-foreground">
-                {u.from} · {u.date}
-              </p>
-              <p className="mt-1 text-base">{u.text}</p>
-            </Card>
-          ))}
+          {state.updates.map((u) => {
+            const mine = u.from === state.caregiverName;
+            return (
+              <Card key={u.id} className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Tag tone="sage">
+                    {u.personId ? `About ${subjectName(u.personId)}` : "General Care Circle"}
+                  </Tag>
+                  <span className="text-sm text-muted-foreground">
+                    {u.from} · {u.date}
+                  </span>
+                </div>
+                <p className="text-base">{u.text}</p>
+                {mine ? (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <Button
+                      variant="quiet"
+                      className="px-4 py-2 text-sm"
+                      onClick={() => {
+                        setEditingUpdateId(u.id);
+                        setUpdateText(u.text);
+                        setUpdateSubject(u.personId ?? "general");
+                        setDeletingUpdateId(null);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="quiet"
+                      className="px-4 py-2 text-sm"
+                      onClick={() => setDeletingUpdateId(u.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                ) : null}
+                {deletingUpdateId === u.id ? (
+                  <div className="rounded-2xl border border-border bg-muted/40 p-4">
+                    <p className="text-base text-foreground">
+                      Delete this care update? This action cannot be undone.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button
+                        variant="quiet"
+                        className="px-4 py-2 text-sm"
+                        onClick={() => setDeletingUpdateId(null)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        className="px-4 py-2 text-sm"
+                        onClick={() => {
+                          setState((s) => ({
+                            ...s,
+                            updates: s.updates.filter((x) => x.id !== u.id),
+                          }));
+                          setDeletingUpdateId(null);
+                          if (editingUpdateId === u.id) {
+                            setEditingUpdateId(null);
+                            setUpdateText("");
+                          }
+                        }}
+                      >
+                        Delete update
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </Card>
+            );
+          })}
           {state.people.flatMap((p) =>
             p.voiceEntries.map((entry) => (
               <Card key={`${p.id}-${entry.id}`}>
