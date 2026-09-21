@@ -284,6 +284,7 @@ export function seedState(): AppState {
         from: "Alicia Boateng",
         date: today(),
         text: "Good morning today. She ate all of breakfast and asked about the garden.",
+        personId: "p1",
       },
     ],
     handoffs: [],

@@ -163,6 +163,8 @@ export interface CareUpdate {
   from: string;
   date: string;
   text: string;
+  /** Subject of the update: a person id, or undefined for a general Care Circle update. */
+  personId?: string;
 }
 
 export interface Handoff {

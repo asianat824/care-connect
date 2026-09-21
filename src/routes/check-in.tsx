@@ -70,6 +70,7 @@ function CheckInPage() {
     setState((s) => ({ ...s, checkInDraft: { ...draft, ...patch } }));
   const [saved, setSaved] = useState(false);
   const [supportChoice, setSupportChoice] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const saveCheckIn = () => {
     setState((s) => ({
@@ -178,6 +179,8 @@ function CheckInPage() {
   const [by, setBy] = useState("");
   const [instructions, setInstructions] = useState("");
   const [visibleTo, setVisibleTo] = useState<string[]>([]);
+  const allSelected =
+    state.members.length > 0 && state.members.every((m) => visibleTo.includes(m.id));
   const [sentCount, setSentCount] = useState(0);
   const [keptPrivate, setKeptPrivate] = useState(false);
 
@@ -217,11 +220,20 @@ function CheckInPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="font-display text-4xl">My check-in</h1>
-        <p className="mt-2 text-lg text-muted-foreground">
-          This is yours. Nothing here is shared unless you choose to send a request.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-4xl">My check-in</h1>
+          <p className="mt-2 text-lg text-muted-foreground">
+            This is yours. Nothing here is shared unless you choose to send a request.
+          </p>
+        </div>
+        <Button
+          variant="quiet"
+          className="px-4 py-2 text-sm"
+          onClick={() => setHistoryOpen(true)}
+        >
+          View check-in history
+        </Button>
       </header>
 
       {/* ============ 1. How am I doing ============ */}
@@ -626,6 +638,17 @@ function CheckInPage() {
                   />
                 </Field>
                 <Field label="Who should receive it?">
+                  <div className="mb-3">
+                    <Chip
+                      selected={allSelected}
+                      onClick={() =>
+                        setVisibleTo(allSelected ? [] : state.members.map((m) => m.id))
+                      }
+                      className="max-w-full whitespace-normal"
+                    >
+                      Select everyone
+                    </Chip>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {state.members.map((m) => (
                       <Chip
@@ -665,23 +688,46 @@ function CheckInPage() {
         )}
       </Accordion>
 
-      <Card>
-        <SectionTitle title="Your check-in history" subtitle="Gentle patterns, not diagnoses." />
-        {state.checkIns.length === 0 ? (
-          <Empty title="No check-ins yet" body="Your first check-in will appear here." />
-        ) : (
-          <ul className="space-y-3">
-            {state.checkIns.slice(0, 8).map((c) => (
-              <li key={c.id} className="flex flex-wrap items-center gap-2 rounded-2xl border border-border p-4">
-                <span className="text-sm text-muted-foreground">{c.date}</span>
-                {c.mood ? <Tag>{c.mood}</Tag> : null}
-                <Tag tone="sage">Energy {c.energy}/5</Tag>
-                <Tag tone="warm">{c.capacity}</Tag>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      {historyOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Your check-in history"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 p-4 sm:items-center"
+        >
+          <Card className="max-h-[80vh] w-full max-w-xl overflow-y-auto">
+            <SectionTitle
+              title="Your check-in history"
+              subtitle="Gentle patterns, not diagnoses."
+              action={
+                <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setHistoryOpen(false)}>
+                  Close
+                </Button>
+              }
+            />
+            <p className="mb-4 text-sm text-muted-foreground">
+              Your check-in history is private and only visible to you.
+            </p>
+            {state.checkIns.length === 0 ? (
+              <Empty title="No check-ins yet" body="Your first check-in will appear here." />
+            ) : (
+              <ul className="space-y-3">
+                {state.checkIns.slice(0, 8).map((c) => (
+                  <li
+                    key={c.id}
+                    className="flex flex-wrap items-center gap-2 rounded-2xl border border-border p-4"
+                  >
+                    <span className="text-sm text-muted-foreground">{c.date}</span>
+                    {c.mood ? <Tag>{c.mood}</Tag> : null}
+                    <Tag tone="sage">Energy {c.energy}/5</Tag>
+                    <Tag tone="warm">{c.capacity}</Tag>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
+      ) : null}
     </div>
   );
 }
