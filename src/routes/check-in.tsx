@@ -135,28 +135,30 @@ function FamilyCheckInPage() {
   const [taskForm, setTaskForm] = useState<{
     id?: string;
     title: string;
-    kind: TaskKind;
+    kind: TaskKind | "";
     personId: string;
     due: string;
     notes: string;
-  }>({ title: "", kind: "Caregiving", personId: "", due: "", notes: "" });
+  }>({ title: "", kind: "", personId: "", due: "", notes: "" });
   const [showTaskForm, setShowTaskForm] = useState(false);
+  const [taskTab, setTaskTab] = useState<TaskKind>("Personal");
 
   const resetTaskForm = () => {
-    setTaskForm({ title: "", kind: "Caregiving", personId: "", due: "", notes: "" });
+    setTaskForm({ title: "", kind: "", personId: "", due: "", notes: "" });
     setShowTaskForm(false);
   };
 
   const saveTask = () => {
-    if (!taskForm.title.trim()) return;
+    if (!taskForm.title.trim() || !taskForm.kind) return;
     const base: Task = {
       id: taskForm.id ?? uid(),
       title: taskForm.title.trim(),
       kind: taskForm.kind,
       bucket: "Not sorted yet",
+      status: "To do",
       done: false,
       createdAt: today(),
-      ...(taskForm.personId ? { personId: taskForm.personId } : {}),
+      ...(taskForm.kind === "Caregiving" && taskForm.personId ? { personId: taskForm.personId } : {}),
       ...(taskForm.due ? { due: taskForm.due } : {}),
       ...(taskForm.notes.trim() ? { notes: taskForm.notes.trim() } : {}),
     };
