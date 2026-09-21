@@ -392,7 +392,9 @@ export function PersonProfile({
 }) {
   const { state, setState } = useStore();
   const navigate = useNavigate();
-  const [section, setSection] = useState<ProfileSection>(initialSection ?? "Current priorities");
+  const [section, setSection] = useState<ProfileSection>(
+    initialSection === "Care Circle" && !careCircleContent ? "Current priorities" : initialSection ?? "Current priorities",
+  );
   const [openForm, setOpenForm] = useState<DetailKey | null>(null);
   const [editing, setEditing] = useState<string | null>(detailParam ?? null);
   const [draft, setDraft] = useState("");
