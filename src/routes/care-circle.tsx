@@ -116,6 +116,11 @@ function CareCirclePage() {
     navigate({ to: "/care-circle", search: { tab: safeTab } });
   };
 
+  const subjectName = (personId: string) => {
+    const p = state.people.find((x) => x.id === personId);
+    return p ? p.preferredName || p.name : "General Care Circle";
+  };
+
   const markHandoffReviewed = (id: string) =>
     setState((s) => ({
       ...s,
