@@ -210,6 +210,26 @@ export interface HandoffNote {
   reviewed: boolean;
 }
 
+export interface WorkTeamRequest {
+  id: string;
+  type: string;
+  neededBy: string;
+  personId?: string;
+  note: string;
+  recipientIds: string[];
+  sentAt: string;
+}
+
+export interface CareConnectPost {
+  id: string;
+  community: "Workplace Community" | "Caregiver Community";
+  topic: string;
+  body: string;
+  responses: number;
+  author: string;
+  date: string;
+}
+
 export interface AppState {
   role: CareRole;
   handoffNotes: HandoffNote[];
@@ -235,4 +255,7 @@ export interface AppState {
     capacity: Capacity;
     note: string;
   };
+  workTeamRequests?: WorkTeamRequest[];
+  careConnectPosts?: CareConnectPost[];
+  joinedCareConnectIds?: string[];
 }

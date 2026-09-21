@@ -87,6 +87,9 @@ export const LOCAL_RESOURCES = [
 export function seedState(): AppState {
   return {
     role: "family",
+    workTeamRequests: [],
+    careConnectPosts: [],
+    joinedCareConnectIds: [],
     handoffNotes: [
       {
         id: "h1",
