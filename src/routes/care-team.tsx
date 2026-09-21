@@ -82,7 +82,7 @@ function CareTeamPage() {
 }
 
 function PeopleSupport({ personId }: { personId?: string }) {
-  const { state } = useStore();
+  const { state, setState } = useStore();
   const navigate = useNavigate();
   const person = state.people.find((item) => item.id === personId) ?? state.people[0];
   const [sentUpdate, setSentUpdate] = useState(false);
