@@ -535,7 +535,14 @@ export function PersonProfile({
     setSection("What matters");
   };
 
-  const availableSections = PROFILE_SECTIONS.filter((value) => value !== "Care Circle" || Boolean(careCircleContent));
+  const availableSections = PROFILE_SECTIONS.filter((value) =>
+    value === "Care Circle"
+      ? hasCareCircle
+      : value === "Shared Care Conversation"
+        ? !conversationInCareCircle
+        : true,
+  );
+
   const labelForSection = (value: ProfileSection) =>
     value === "Current priorities"
       ? "Current Priorities"
