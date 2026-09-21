@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Accordion, Button, Card, Chip, Empty, Field, Input, SectionTitle, Tabs, Tag, Textarea } from "@/components/ui";
 import { useStore } from "@/lib/store";
 import { SUPPORT_TYPES, today, uid } from "@/lib/demo-data";
-import type { Capacity, CapacityBucket, Task, TaskKind, TaskStatus } from "@/lib/types";
+import type { Capacity, CapacityBucket, Member, MemberCategory, Task, TaskKind, TaskStatus } from "@/lib/types";
 
 export const Route = createFileRoute("/check-in")({
   validateSearch: (search: Record<string, unknown>) => {
@@ -44,6 +44,12 @@ const BUCKETS: CapacityBucket[] = [
   "I may need help",
   "This is outside my capacity",
 ];
+
+const PROFESSIONAL_ROLE = /paid caregiver|home-care|home care|aide|nurse|physician|doctor|social worker|therapist|hospice|provider/i;
+
+function memberCategory(member: Member): MemberCategory {
+  return member.category ?? (PROFESSIONAL_ROLE.test(member.role) ? "Care Team" : "Care Circle");
+}
 
 type SectionId = "how" | "tasks" | "plate" | "capacity" | "delegate";
 
@@ -384,7 +390,7 @@ function FamilyCheckInPage() {
 
               {supportChoice === "talk" ? (
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Link to="/care-circle" search={{ tab: "Care Team" }}>
+                  <Link to="/care-circle" search={{ tab: "Care Circle" }}>
                     <Button variant="support">Contact someone in My Care Circle</Button>
                   </Link>
                   <Link to="/care-network" search={{ tab: "Peer Support" }}>
@@ -806,17 +812,27 @@ function FamilyCheckInPage() {
                       Select everyone
                     </Chip>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {state.members.map((m) => (
-                      <Chip
-                        key={m.id}
-                        selected={visibleTo.includes(m.id)}
-                        onClick={() => toggleMember(m.id)}
-                        className="max-w-full whitespace-normal"
-                      >
-                        {m.name} · {m.role}
-                      </Chip>
-                    ))}
+                  <div className="space-y-4">
+                    {(["Care Circle", "Care Team"] as MemberCategory[]).map((category) => {
+                      const members = state.members.filter((member) => memberCategory(member) === category);
+                      return (
+                        <div key={category}>
+                          <p className="mb-2 text-sm font-semibold text-muted-foreground">{category}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {members.map((m) => (
+                              <Chip
+                                key={m.id}
+                                selected={visibleTo.includes(m.id)}
+                                onClick={() => toggleMember(m.id)}
+                                className="max-w-full whitespace-normal"
+                              >
+                                {m.name} · {m.role}
+                              </Chip>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </Field>
                 <p className="rounded-2xl bg-card p-4 text-base text-foreground">
