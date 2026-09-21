@@ -219,11 +219,20 @@ function CheckInPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="font-display text-4xl">My check-in</h1>
-        <p className="mt-2 text-lg text-muted-foreground">
-          This is yours. Nothing here is shared unless you choose to send a request.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-4xl">My check-in</h1>
+          <p className="mt-2 text-lg text-muted-foreground">
+            This is yours. Nothing here is shared unless you choose to send a request.
+          </p>
+        </div>
+        <Button
+          variant="quiet"
+          className="px-4 py-2 text-sm"
+          onClick={() => setHistoryOpen(true)}
+        >
+          View check-in history
+        </Button>
       </header>
 
       {/* ============ 1. How am I doing ============ */}
