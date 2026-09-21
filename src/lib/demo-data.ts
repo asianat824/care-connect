@@ -86,6 +86,25 @@ export const LOCAL_RESOURCES = [
 
 export function seedState(): AppState {
   return {
+    role: "family",
+    handoffNotes: [
+      {
+        id: "h1",
+        personId: "p1",
+        personName: "Mama Ruth",
+        from: "Alicia Boateng",
+        fromRole: "paid caregiver",
+        submittedAt: "Today at 5:42 PM",
+        careCompleted: ["Meals", "Companionship", "Appointment support"],
+        noticed: "Ruth seemed more tired than usual.",
+        followUp: "Ask whether she wants tomorrow's appointment moved to the afternoon.",
+        preferenceChange: "Confirm an existing preference",
+        preferenceNote: "Ruth prefers to be asked before plans are changed.",
+        urgency: "Review soon",
+        sharedWith: "Jordan — Family caregiver",
+        reviewed: false,
+      },
+    ],
     onboarded: false,
     caregiverName: "Jordan",
     priorities: [],

@@ -12,9 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CareCircleRouteImport } from './routes/care-circle'
 import { Route as CareNetworkRouteImport } from './routes/care-network'
+import { Route as CareTeamRouteImport } from './routes/care-team'
 import { Route as CheckInRouteImport } from './routes/check-in'
+import { Route as HandoffNotesRouteImport } from './routes/handoff-notes'
 import { Route as MomentsRouteImport } from './routes/moments'
 import { Route as MyVoiceRouteImport } from './routes/my-voice'
+import { Route as PaidPeopleRouteImport } from './routes/paid-people'
 import { Route as PeopleRouteImport } from './routes/people'
 import { Route as CareSummaryPersonIdRouteImport } from './routes/care-summary.$personId'
 import { Route as VoiceGuestPersonIdRouteImport } from './routes/voice-guest.$personId'
@@ -34,9 +37,19 @@ const CareNetworkRoute = CareNetworkRouteImport.update({
   path: '/care-network',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CareTeamRoute = CareTeamRouteImport.update({
+  id: '/care-team',
+  path: '/care-team',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckInRoute = CheckInRouteImport.update({
   id: '/check-in',
   path: '/check-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HandoffNotesRoute = HandoffNotesRouteImport.update({
+  id: '/handoff-notes',
+  path: '/handoff-notes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MomentsRoute = MomentsRouteImport.update({
@@ -47,6 +60,11 @@ const MomentsRoute = MomentsRouteImport.update({
 const MyVoiceRoute = MyVoiceRouteImport.update({
   id: '/my-voice',
   path: '/my-voice',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaidPeopleRoute = PaidPeopleRouteImport.update({
+  id: '/paid-people',
+  path: '/paid-people',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PeopleRoute = PeopleRouteImport.update({
@@ -69,9 +87,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/care-circle': typeof CareCircleRoute
   '/care-network': typeof CareNetworkRoute
+  '/care-team': typeof CareTeamRoute
   '/check-in': typeof CheckInRoute
+  '/handoff-notes': typeof HandoffNotesRoute
   '/moments': typeof MomentsRoute
   '/my-voice': typeof MyVoiceRoute
+  '/paid-people': typeof PaidPeopleRoute
   '/people': typeof PeopleRoute
   '/care-summary/$personId': typeof CareSummaryPersonIdRoute
   '/voice-guest/$personId': typeof VoiceGuestPersonIdRoute
@@ -80,9 +101,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/care-circle': typeof CareCircleRoute
   '/care-network': typeof CareNetworkRoute
+  '/care-team': typeof CareTeamRoute
   '/check-in': typeof CheckInRoute
+  '/handoff-notes': typeof HandoffNotesRoute
   '/moments': typeof MomentsRoute
   '/my-voice': typeof MyVoiceRoute
+  '/paid-people': typeof PaidPeopleRoute
   '/people': typeof PeopleRoute
   '/care-summary/$personId': typeof CareSummaryPersonIdRoute
   '/voice-guest/$personId': typeof VoiceGuestPersonIdRoute
@@ -92,9 +116,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/care-circle': typeof CareCircleRoute
   '/care-network': typeof CareNetworkRoute
+  '/care-team': typeof CareTeamRoute
   '/check-in': typeof CheckInRoute
+  '/handoff-notes': typeof HandoffNotesRoute
   '/moments': typeof MomentsRoute
   '/my-voice': typeof MyVoiceRoute
+  '/paid-people': typeof PaidPeopleRoute
   '/people': typeof PeopleRoute
   '/care-summary/$personId': typeof CareSummaryPersonIdRoute
   '/voice-guest/$personId': typeof VoiceGuestPersonIdRoute
@@ -105,9 +132,12 @@ export interface FileRouteTypes {
     | '/'
     | '/care-circle'
     | '/care-network'
+    | '/care-team'
     | '/check-in'
+    | '/handoff-notes'
     | '/moments'
     | '/my-voice'
+    | '/paid-people'
     | '/people'
     | '/care-summary/$personId'
     | '/voice-guest/$personId'
@@ -116,9 +146,12 @@ export interface FileRouteTypes {
     | '/'
     | '/care-circle'
     | '/care-network'
+    | '/care-team'
     | '/check-in'
+    | '/handoff-notes'
     | '/moments'
     | '/my-voice'
+    | '/paid-people'
     | '/people'
     | '/care-summary/$personId'
     | '/voice-guest/$personId'
@@ -127,9 +160,12 @@ export interface FileRouteTypes {
     | '/'
     | '/care-circle'
     | '/care-network'
+    | '/care-team'
     | '/check-in'
+    | '/handoff-notes'
     | '/moments'
     | '/my-voice'
+    | '/paid-people'
     | '/people'
     | '/care-summary/$personId'
     | '/voice-guest/$personId'
@@ -139,9 +175,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CareCircleRoute: typeof CareCircleRoute
   CareNetworkRoute: typeof CareNetworkRoute
+  CareTeamRoute: typeof CareTeamRoute
   CheckInRoute: typeof CheckInRoute
+  HandoffNotesRoute: typeof HandoffNotesRoute
   MomentsRoute: typeof MomentsRoute
   MyVoiceRoute: typeof MyVoiceRoute
+  PaidPeopleRoute: typeof PaidPeopleRoute
   PeopleRoute: typeof PeopleRoute
   CareSummaryPersonIdRoute: typeof CareSummaryPersonIdRoute
   VoiceGuestPersonIdRoute: typeof VoiceGuestPersonIdRoute
@@ -170,11 +209,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CareNetworkRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/care-team': {
+      id: '/care-team'
+      path: '/care-team'
+      fullPath: '/care-team'
+      preLoaderRoute: typeof CareTeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/check-in': {
       id: '/check-in'
       path: '/check-in'
       fullPath: '/check-in'
       preLoaderRoute: typeof CheckInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/handoff-notes': {
+      id: '/handoff-notes'
+      path: '/handoff-notes'
+      fullPath: '/handoff-notes'
+      preLoaderRoute: typeof HandoffNotesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/moments': {
@@ -189,6 +242,13 @@ declare module '@tanstack/react-router' {
       path: '/my-voice'
       fullPath: '/my-voice'
       preLoaderRoute: typeof MyVoiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paid-people': {
+      id: '/paid-people'
+      path: '/paid-people'
+      fullPath: '/paid-people'
+      preLoaderRoute: typeof PaidPeopleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/people': {
@@ -219,9 +279,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CareCircleRoute: CareCircleRoute,
   CareNetworkRoute: CareNetworkRoute,
+  CareTeamRoute: CareTeamRoute,
   CheckInRoute: CheckInRoute,
+  HandoffNotesRoute: HandoffNotesRoute,
   MomentsRoute: MomentsRoute,
   MyVoiceRoute: MyVoiceRoute,
+  PaidPeopleRoute: PaidPeopleRoute,
   PeopleRoute: PeopleRoute,
   CareSummaryPersonIdRoute: CareSummaryPersonIdRoute,
   VoiceGuestPersonIdRoute: VoiceGuestPersonIdRoute,

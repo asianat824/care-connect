@@ -12,6 +12,7 @@ import {
   sourceLabel,
 } from "@/lib/details";
 import type { Capacity, Detail, DetailKey, Person } from "@/lib/types";
+import { PaidHome } from "@/components/PaidHome";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -207,7 +208,83 @@ const QUICK_MOODS: { label: string; Icon: typeof Smile; capacity: Capacity }[] =
   { label: "Overwhelmed", Icon: CloudRain, capacity: "I am overwhelmed" },
 ];
 
+function CareUpdatesSection() {
+  const { state, setState } = useStore();
+  const notes = state.handoffNotes;
+
+  const markReviewed = (id: string) =>
+    setState((s) => ({
+      ...s,
+      handoffNotes: s.handoffNotes.map((n) => (n.id === id ? { ...n, reviewed: true } : n)),
+    }));
+
+  return (
+    <Card>
+      <SectionTitle
+        title="Important care updates"
+        subtitle="Handoffs shared with you by paid caregivers."
+      />
+      {notes.length === 0 ? (
+        <Empty
+          title="No updates right now"
+          body="When a paid caregiver completes an end-of-shift handoff, it will appear here."
+        />
+      ) : (
+        <ul className="space-y-4">
+          {notes.map((n) => (
+            <li key={n.id} className="rounded-2xl border border-border p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <Tag tone="sage">{n.personName}</Tag>
+                <Tag tone="warm">Urgency: {n.urgency}</Tag>
+                {n.reviewed ? <Tag>Reviewed</Tag> : null}
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Shared by {n.from}, {n.fromRole} · {n.submittedAt}
+              </p>
+              <p className="mt-2 text-base">
+                <span className="text-muted-foreground">Care completed: </span>
+                {n.careCompleted.join(", ") || "—"}
+              </p>
+              <p className="mt-1 text-base">
+                <span className="text-muted-foreground">What I noticed: </span>
+                {n.noticed}
+              </p>
+              <p className="mt-1 text-base">
+                <span className="text-muted-foreground">Follow-up: </span>
+                {n.followUp}
+              </p>
+              {n.preferenceChange !== "No change" ? (
+                <p className="mt-1 text-base">
+                  <span className="text-muted-foreground">{n.preferenceChange}: </span>
+                  {n.preferenceNote}
+                </p>
+              ) : null}
+              {n.reviewed ? null : (
+                <div className="mt-3">
+                  <Button
+                    variant="support"
+                    className="px-4 py-2 text-sm"
+                    onClick={() => markReviewed(n.id)}
+                  >
+                    Mark as reviewed
+                  </Button>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
 function HomePage() {
+  const { state } = useStore();
+  if (state.role === "paid") return <PaidHome />;
+  return <FamilyHome />;
+}
+
+function FamilyHome() {
   const { state, setState } = useStore();
   const [quick, setQuick] = useState<string | null>(null);
   const prompt = CONNECTION_PROMPTS[new Date().getDay() % CONNECTION_PROMPTS.length] ?? "";
@@ -279,6 +356,8 @@ function HomePage() {
           <Button className="w-full sm:w-auto">Complete a full check-in</Button>
         </Link>
       </Card>
+
+      <CareUpdatesSection />
 
       <CheckBackSection />
 
