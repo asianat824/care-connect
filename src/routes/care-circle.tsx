@@ -224,6 +224,8 @@ function CareCirclePage() {
     setPerms((v) => (v.includes(p) ? v.filter((x) => x !== p) : [...v, p]));
 
   const invite = () => {
+    if (!form.category || !form.name.trim()) return;
+    const destination = form.category;
     setState((s) => ({
       ...s,
       members: [
@@ -236,13 +238,14 @@ function CareCirclePage() {
           availability: form.availability,
           helpsWith: form.helpsWith,
           permissions: perms,
-          category: form.category || "Care Circle",
+          category: destination,
         },
       ],
     }));
     setForm({ category: "", name: "", role: "", contact: "", availability: "", helpsWith: "" });
     setPerms(["View basic care information"]);
     setInviting(false);
+    navigate({ to: "/care-circle", search: { tab: destination } });
   };
 
   const setRequest = (id: string, patch: Partial<(typeof state.requests)[number]>) =>
@@ -397,7 +400,7 @@ function CareCirclePage() {
           ) : (
             <Button
               onClick={() => {
-                setForm((current) => ({ ...current, category: tab }));
+                setForm((current) => ({ ...current, category: "" }));
                 setInviting(true);
               }}
             >
