@@ -178,6 +178,8 @@ function CheckInPage() {
   const [by, setBy] = useState("");
   const [instructions, setInstructions] = useState("");
   const [visibleTo, setVisibleTo] = useState<string[]>([]);
+  const allSelected =
+    state.members.length > 0 && state.members.every((m) => visibleTo.includes(m.id));
   const [sentCount, setSentCount] = useState(0);
   const [keptPrivate, setKeptPrivate] = useState(false);
 
