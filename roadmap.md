@@ -46,7 +46,7 @@
 - [x] Care Connect drafts reviewed by AI to remove identifying details
 
 ## Family support organization
-- [ ] Split unpaid Care Circle members from professional Care Team members
-- [ ] Require invitation category and route new members to the selected family tab
-- [ ] Group delegated request recipients by Care Circle and Care Team
+- [x] Split unpaid Care Circle members from professional Care Team members
+- [x] Require invitation category and route new members to the selected family tab
+- [x] Group delegated request recipients by Care Circle and Care Team
 - [ ] Verify family mobile/desktop behavior, paid workspace regression, and build

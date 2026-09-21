@@ -176,6 +176,7 @@ export function seedState(): AppState {
         contact: "marcus@example.com",
         availability: "Tuesdays and weekends",
         helpsWith: "Driving, appointments",
+        category: "Care Circle",
         permissions: [
           "View basic care information",
           "View important updates",
@@ -189,6 +190,7 @@ export function seedState(): AppState {
         contact: "(555) 014-2290",
         availability: "Weekday mornings",
         helpsWith: "Groceries, checking in",
+        category: "Care Circle",
         permissions: ["View basic care information", "Receive requests for help"],
       },
       {
@@ -196,8 +198,9 @@ export function seedState(): AppState {
         name: "Alicia Boateng",
         role: "Paid caregiver",
         contact: "alicia@example.com",
-        availability: "Mon–Thu, 9am–2pm",
-        helpsWith: "Daily care, meals",
+        availability: "Mon–Thu, 9 AM–2 PM",
+        helpsWith: "Daily care and meals",
+        category: "Care Team",
         permissions: [
           "View basic care information",
           "View important updates",

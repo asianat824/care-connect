@@ -17,6 +17,8 @@ import { useStore } from "@/lib/store";
 import { today, uid } from "@/lib/demo-data";
 import type {
   HelpRequest,
+  Member,
+  MemberCategory,
   Permission,
   RecipientResponse,
   RecipientResponseStatus,
@@ -30,7 +32,7 @@ import {
 
 export const Route = createFileRoute("/care-circle")({
   validateSearch: (search: Record<string, unknown>) => {
-    const tabs = ["People I Care For", "Care Team", "Requests", "Care Updates"] as const;
+    const tabs = ["People I Care For", "Care Circle", "Care Team", "Requests", "Care Updates"] as const;
     const tab = tabs.includes(search["tab"] as (typeof tabs)[number])
       ? (search["tab"] as (typeof tabs)[number])
       : "People I Care For";
@@ -65,10 +67,17 @@ export const Route = createFileRoute("/care-circle")({
 
 const TABS = [
   "People I Care For",
+  "Care Circle",
   "Care Team",
   "Requests",
   "Care Updates",
 ] as const;
+
+const PROFESSIONAL_ROLE = /paid caregiver|home-care|home care|aide|nurse|physician|doctor|social worker|therapist|hospice|provider/i;
+
+function categoryFor(member: Member): MemberCategory {
+  return member.category ?? (PROFESSIONAL_ROLE.test(member.role) ? "Care Team" : "Care Circle");
+}
 
 const PERMISSIONS: Permission[] = [
   "View basic care information",
@@ -149,6 +158,7 @@ function CareCirclePage() {
   const tab = search.tab ?? "People I Care For";
   const [inviting, setInviting] = useState(false);
   const [form, setForm] = useState({
+    category: "" as MemberCategory | "",
     name: "",
     role: "",
     contact: "",
@@ -216,9 +226,21 @@ function CareCirclePage() {
   const invite = () => {
     setState((s) => ({
       ...s,
-      members: [...s.members, { id: uid(), ...form, permissions: perms }],
+      members: [
+        ...s.members,
+        {
+          id: uid(),
+          name: form.name,
+          role: form.role,
+          contact: form.contact,
+          availability: form.availability,
+          helpsWith: form.helpsWith,
+          permissions: perms,
+          category: form.category || "Care Circle",
+        },
+      ],
     }));
-    setForm({ name: "", role: "", contact: "", availability: "", helpsWith: "" });
+    setForm({ category: "", name: "", role: "", contact: "", availability: "", helpsWith: "" });
     setPerms(["View basic care information"]);
     setInviting(false);
   };
@@ -268,9 +290,17 @@ function CareCirclePage() {
         />
       )}
 
-      {tab === "Care Team" && (
+      {(tab === "Care Circle" || tab === "Care Team") && (
         <div className="space-y-4">
-          {state.members.map((m) => (
+          <SectionTitle
+            title={tab}
+            subtitle={
+              tab === "Care Circle"
+                ? "Family, friends, neighbors, and trusted people who help care happen."
+                : "Paid and professional caregivers involved in this person’s care."
+            }
+          />
+          {state.members.filter((member) => categoryFor(member) === tab).map((m) => (
             <Card key={m.id}>
               <div className="flex items-start gap-4">
                 <Avatar name={m.name} />
@@ -281,6 +311,9 @@ function CareCirclePage() {
                   </p>
                   <p className="mt-2 text-base">Available: {m.availability}</p>
                   <p className="text-base">Can help with: {m.helpsWith}</p>
+                   {tab === "Care Team" ? (
+                     <p className="mt-2 text-base font-medium text-secondary-foreground">Approved care access</p>
+                   ) : null}
                   <div className="mt-3 flex flex-wrap gap-2">
                     {m.permissions.map((p) => (
                       <Tag key={p} tone="sage">
@@ -296,6 +329,25 @@ function CareCirclePage() {
           {inviting ? (
             <Card className="space-y-4">
               <SectionTitle title="Invite someone you trust" />
+                <fieldset>
+                  <legend className="text-base font-medium">Where should this person belong?</legend>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Chip
+                      selected={form.category === "Care Circle"}
+                      onClick={() => setForm({ ...form, category: "Care Circle" })}
+                      className="max-w-full whitespace-normal"
+                    >
+                      Care Circle — family, friend, neighbor, or community support
+                    </Chip>
+                    <Chip
+                      selected={form.category === "Care Team"}
+                      onClick={() => setForm({ ...form, category: "Care Team" })}
+                      className="max-w-full whitespace-normal"
+                    >
+                      Care Team — paid caregiver or professional provider
+                    </Chip>
+                  </div>
+                </fieldset>
               <Field label="Name">
                 <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               </Field>
@@ -303,7 +355,7 @@ function CareCirclePage() {
                 <Input
                   value={form.role}
                   onChange={(e) => setForm({ ...form, role: e.target.value })}
-                  placeholder="Sister, neighbor, paid caregiver"
+                  placeholder={form.category === "Care Team" ? "Nurse, therapist, paid caregiver" : "Sister, friend, neighbor"}
                 />
               </Field>
               <Field label="Contact">
@@ -337,13 +389,20 @@ function CareCirclePage() {
                 <Button variant="quiet" onClick={() => setInviting(false)}>
                   Cancel
                 </Button>
-                <Button disabled={!form.name.trim()} onClick={invite}>
+                <Button disabled={!form.name.trim() || !form.category} onClick={invite}>
                   Send invitation
                 </Button>
               </div>
             </Card>
           ) : (
-            <Button onClick={() => setInviting(true)}>Invite someone</Button>
+            <Button
+              onClick={() => {
+                setForm((current) => ({ ...current, category: tab }));
+                setInviting(true);
+              }}
+            >
+              {tab === "Care Circle" ? "Add someone to my circle" : "Add care professional"}
+            </Button>
           )}
         </div>
       )}

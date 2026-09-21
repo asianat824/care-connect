@@ -87,6 +87,8 @@ export type Permission =
   | "Add care updates"
   | "Contribute to Care Moments";
 
+export type MemberCategory = "Care Circle" | "Care Team";
+
 export interface Member {
   id: string;
   name: string;
@@ -95,6 +97,8 @@ export interface Member {
   availability: string;
   helpsWith: string;
   permissions: Permission[];
+  /** Personal/unpaid support or formal/professional care. Optional for older saved prototypes. */
+  category?: MemberCategory;
 }
 
 export type RequestStatus =
