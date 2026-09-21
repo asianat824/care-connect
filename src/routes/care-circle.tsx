@@ -130,7 +130,7 @@ function CareCirclePage() {
         </p>
       </header>
 
-      <Tabs tabs={TABS} active={tab} onChange={setTab} />
+      <Tabs tabs={[...TABS]} active={tab} onChange={setTab} />
 
       {tab === "People I Care For" && (
         <PeopleCareExperience
