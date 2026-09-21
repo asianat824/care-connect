@@ -45,7 +45,7 @@ const BUCKETS: CapacityBucket[] = [
   "This is outside my capacity",
 ];
 
-type SectionId = "how" | "plate" | "capacity" | "delegate";
+type SectionId = "how" | "tasks" | "plate" | "capacity" | "delegate";
 
 function CheckInPage() {
   const { state } = useStore();
@@ -89,10 +89,14 @@ function FamilyCheckInPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
 
-  const initialSection: SectionId =
-    search.section === "plate" || search.section === "capacity" || search.section === "delegate"
+  const initialSection: SectionId | null =
+    search.section === "how" ||
+    search.section === "tasks" ||
+    search.section === "plate" ||
+    search.section === "capacity" ||
+    search.section === "delegate"
       ? search.section
-      : "how";
+      : null;
   const [open, setOpen] = useState<SectionId | null>(initialSection);
   const toggle = (id: SectionId) => setOpen((v) => (v === id ? null : id));
 
