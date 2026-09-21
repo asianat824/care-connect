@@ -55,7 +55,7 @@ const TABS = [
   "Care Team",
   "Requests",
   "Care Updates",
-];
+] as const;
 
 const PERMISSIONS: Permission[] = [
   "View basic care information",
@@ -107,7 +107,9 @@ function CareCirclePage() {
     }));
 
   const setTab = (next: string) => {
-    const safeTab = TABS.includes(next) ? next : "People I Care For";
+    const safeTab: (typeof TABS)[number] = TABS.includes(next as (typeof TABS)[number])
+      ? (next as (typeof TABS)[number])
+      : "People I Care For";
     navigate({ to: "/care-circle", search: { tab: safeTab } });
   };
 
@@ -131,7 +133,10 @@ function CareCirclePage() {
       <Tabs tabs={TABS} active={tab} onChange={setTab} />
 
       {tab === "People I Care For" && (
-        <PeopleCareExperience person={search.person} detail={search.detail} />
+        <PeopleCareExperience
+          {...(search.person ? { person: search.person } : {})}
+          {...(search.detail ? { detail: search.detail } : {})}
+        />
       )}
 
       {tab === "Care Team" && (

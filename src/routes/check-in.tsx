@@ -325,7 +325,7 @@ function CheckInPage() {
 
               {supportChoice === "talk" ? (
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Link to="/care-circle">
+                  <Link to="/care-circle" search={{ tab: "Care Team" }}>
                     <Button variant="support">Contact someone in My Care Circle</Button>
                   </Link>
                   <Link to="/care-network" search={{ tab: "Peer Support" }}>
@@ -655,7 +655,7 @@ function CheckInPage() {
                 <button
                   type="button"
                   className="underline underline-offset-4"
-                  onClick={() => navigate({ to: "/care-circle" })}
+                  onClick={() => navigate({ to: "/care-circle", search: { tab: "Requests" } })}
                 >
                   Follow it in My Care Circle
                 </button>

@@ -68,7 +68,9 @@ export function PeopleCareExperience({ person: personParam, detail: detailParam 
   const [relationship, setRelationship] = useState("");
 
   const selected = state.people.find((p) => p.id === personParam);
-  if (selected) return <PersonDetail person={selected} detailParam={detailParam} />;
+  if (selected) {
+    return <PersonDetail person={selected} {...(detailParam ? { detailParam } : {})} />;
+  }
 
   const addPerson = () => {
     const id = uid();
