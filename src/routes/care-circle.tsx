@@ -25,7 +25,7 @@ export const Route = createFileRoute("/care-circle")({
       ? (search["tab"] as (typeof tabs)[number])
       : "People I Care For";
     return {
-      tab,
+      ...(search["tab"] ? { tab } : {}),
       ...(typeof search["person"] === "string" ? { person: search["person"] } : {}),
       ...(typeof search["detail"] === "string" ? { detail: search["detail"] } : {}),
     };
@@ -69,7 +69,7 @@ function CareCirclePage() {
   const { state, setState } = useStore();
   const search = Route.useSearch();
   const navigate = useNavigate();
-  const tab = search.tab;
+  const tab = search.tab ?? "People I Care For";
   const [inviting, setInviting] = useState(false);
   const [form, setForm] = useState({
     name: "",

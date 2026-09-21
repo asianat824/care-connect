@@ -22,12 +22,12 @@ function CareSummaryPage() {
   const { state } = useStore();
   const { personId } = Route.useParams();
   const person = state.people.find((item) => item.id === personId);
-  if (!person) return <main className="mx-auto max-w-3xl px-5 py-12"><h1 className="font-display text-4xl">Care summary unavailable</h1><Link to="/people" className="mt-5 block underline">Return to People I Care For</Link></main>;
+  if (!person) return <main className="mx-auto max-w-3xl px-5 py-12"><h1 className="font-display text-4xl">Care summary unavailable</h1><Link to="/care-circle" search={{ tab: "People I Care For" }} className="mt-5 block underline">Return to My Care Circle</Link></main>;
   const current = KEYS.flatMap((key) => person[key].filter((detail) => !detail.archived && detail.status === "Current").map((detail) => ({ key, detail })));
   const selectedIds = person.summaryDetailIds ?? current.map(({ detail }) => detail.id);
 
   return <main className="care-summary mx-auto min-h-screen max-w-4xl px-5 py-8 sm:py-12">
-    <div className="print-controls mb-7 flex flex-wrap items-center justify-between gap-3"><Link to="/people" search={{ person: person.id }} className="underline underline-offset-4">← Back to {person.name}</Link><Button onClick={() => window.print()}>Print summary</Button></div>
+    <div className="print-controls mb-7 flex flex-wrap items-center justify-between gap-3"><Link to="/care-circle" search={{ tab: "People I Care For", person: person.id }} className="underline underline-offset-4">← Back to {person.name}</Link><Button onClick={() => window.print()}>Print summary</Button></div>
     <article className="rounded-3xl border border-border bg-card p-6 sm:p-8">
       <header className="border-b border-border pb-5"><p className="text-sm font-semibold text-muted-foreground">CARE SUMMARY</p><h1 className="mt-1 font-display text-4xl">{person.preferredName || person.name}</h1><p className="mt-1 text-base text-muted-foreground">{person.name} · {person.relationship}{person.pronouns ? ` · ${person.pronouns}` : ""}</p><p className="mt-3 text-sm text-foreground">Selected current details to support respectful, familiar care. Confirm details directly when circumstances change.</p></header>
       <div className="summary-grid mt-5 grid gap-x-8 gap-y-5 sm:grid-cols-2">{KEYS.map((key) => {

@@ -54,7 +54,7 @@ function MyVoicePage() {
         title="My Voice isn't turned on yet"
         body="Open a person's profile and choose “Invite them to contribute” to turn this on."
         action={
-          <Link to="/people">
+          <Link to="/care-circle" search={{ tab: "People I Care For" }}>
             <Button>Go to profiles</Button>
           </Link>
         }
@@ -155,7 +155,7 @@ function MyVoicePage() {
         )}
       </Card>
 
-      <Link to="/people" className="block text-lg underline underline-offset-4">
+      <Link to="/care-circle" search={{ tab: "People I Care For", person: current.id }} className="block text-lg underline underline-offset-4">
         ← Back to the caregiver view
       </Link>
     </div>
