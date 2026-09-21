@@ -150,6 +150,55 @@ export interface Priority {
   reviewDate?: string;
   done: boolean;
   createdAt: string;
+  /** Who added the priority, e.g. "Jordan". */
+  addedBy?: string;
+  /** The role of the person who added it, e.g. "Family caregiver". */
+  addedByRole?: string;
+  /** Plain-language description of who can see this priority. */
+  visibleTo?: string;
+  status?: "Active" | "In progress" | "Complete" | "Archived";
+  archived?: boolean;
+}
+
+export type ConversationEntryType =
+  | "Preference"
+  | "Routine"
+  | "Observation"
+  | "Question"
+  | "Follow-up"
+  | "Possible change to confirm";
+
+export type ConversationStatus =
+  | "Open"
+  | "Confirmed"
+  | "Needs more information"
+  | "Ask the person"
+  | "No longer current";
+
+export interface ConversationReply {
+  id: string;
+  author: string;
+  authorRole: string;
+  text: string;
+  createdAt: string;
+}
+
+export interface ConversationEntry {
+  id: string;
+  personId: string;
+  type: ConversationEntryType;
+  message: string;
+  author: string;
+  authorRole: string;
+  createdAt: string;
+  relatedPriorityId?: string;
+  visibleTo: string;
+  status: ConversationStatus;
+  replies: ConversationReply[];
+  /** Set once this entry has been added to the person's profile. */
+  addedToProfile?: { date: string; by: string };
+  /** Set when the entry was created from a handoff note. */
+  fromHandoffId?: string;
 }
 
 export interface Offer {
