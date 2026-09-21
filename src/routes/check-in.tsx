@@ -701,7 +701,7 @@ function FamilyCheckInPage() {
         )}
       </Accordion>
 
-      {/* ============ 4. Delegation ============ */}
+      {/* ============ 5. Delegation ============ */}
       <Accordion
         id="delegate"
         title="What can I delegate?"
