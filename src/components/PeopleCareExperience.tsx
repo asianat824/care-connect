@@ -382,6 +382,9 @@ export function PersonProfile({
   backLink,
   extraHeader,
   careCircleContent,
+  renderCareCircle,
+  conversationInCareCircle,
+  conversationStartOpen,
 }: {
   person: Person;
   detailParam?: string;
@@ -389,12 +392,20 @@ export function PersonProfile({
   backLink?: ReactNode;
   extraHeader?: ReactNode;
   careCircleContent?: ReactNode;
+  /** Lets the host render the Care Circle with a control that opens the private care conversation. */
+  renderCareCircle?: (openConversation: () => void, conversationOpen: boolean) => ReactNode;
+  /** When true, the conversation lives inside Care Circle instead of its own tab. */
+  conversationInCareCircle?: boolean;
+  conversationStartOpen?: boolean;
 }) {
   const { state, setState } = useStore();
   const navigate = useNavigate();
+  const hasCareCircle = Boolean(careCircleContent || renderCareCircle);
+  const [conversationOpen, setConversationOpen] = useState(Boolean(conversationStartOpen));
   const [section, setSection] = useState<ProfileSection>(
-    initialSection === "Care Circle" && !careCircleContent ? "Current priorities" : initialSection ?? "Current priorities",
+    initialSection === "Care Circle" && !hasCareCircle ? "Current priorities" : initialSection ?? "Current priorities",
   );
+
   const [openForm, setOpenForm] = useState<DetailKey | null>(null);
   const [editing, setEditing] = useState<string | null>(detailParam ?? null);
   const [draft, setDraft] = useState("");
@@ -524,7 +535,14 @@ export function PersonProfile({
     setSection("What matters");
   };
 
-  const availableSections = PROFILE_SECTIONS.filter((value) => value !== "Care Circle" || Boolean(careCircleContent));
+  const availableSections = PROFILE_SECTIONS.filter((value) =>
+    value === "Care Circle"
+      ? hasCareCircle
+      : value === "Shared Care Conversation"
+        ? !conversationInCareCircle
+        : true,
+  );
+
   const labelForSection = (value: ProfileSection) =>
     value === "Current priorities"
       ? "Current Priorities"
@@ -572,11 +590,27 @@ export function PersonProfile({
 
       {section === "Current priorities" ? <CurrentPriorities person={person} /> : null}
 
-      {section === "Care Circle" ? careCircleContent : null}
+      {section === "Care Circle" ? (
+        <div className="space-y-8">
+          {renderCareCircle
+            ? renderCareCircle(() => setConversationOpen((value) => !value), conversationOpen)
+            : careCircleContent}
+          {conversationInCareCircle && conversationOpen ? (
+            <div className="space-y-3">
+              <p className="text-base text-muted-foreground">
+                Message Jordan directly about {firstName}&rsquo;s care. This conversation is only visible to you and the
+                designated care contact.
+              </p>
+              <SharedCareConversation person={person} onAddToProfile={addEntryToProfile} />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
-      {section === "Shared Care Conversation" ? (
+      {section === "Shared Care Conversation" && !conversationInCareCircle ? (
         <SharedCareConversation person={person} onAddToProfile={addEntryToProfile} />
       ) : null}
+
 
       {section === "Care Moments" ? <CareMomentsSection person={person} /> : null}
 
