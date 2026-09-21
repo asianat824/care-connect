@@ -140,6 +140,9 @@ export function PeopleCareExperience({ person: personParam, detail: detailParam 
                       </p>
                     </div>
                   ) : null}
+                  <p className="mt-4 text-base font-semibold text-primary">
+                    View care profile and priorities
+                  </p>
                 </Card>
               </Link>
             );
