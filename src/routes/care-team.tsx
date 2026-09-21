@@ -212,7 +212,8 @@ function PeopleSupport({ personId, section }: { personId?: string; section?: Pro
                 ))}
             </div>
           </div>
-        }
+        )}
+
       />
     );
   }
