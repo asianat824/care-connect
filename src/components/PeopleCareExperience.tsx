@@ -644,6 +644,32 @@ function PersonDetail({ person, detailParam }: { person: Person; detailParam?: s
             Add
           </Button>
         </div>
+        <div className="mt-6 border-t border-border pt-4">
+          <p className="text-base font-medium text-foreground">
+            Care Circle updates about {person.preferredName || person.name}
+          </p>
+          {state.updates.filter((u) => u.personId === person.id).length === 0 ? (
+            <p className="mt-2 text-base text-muted-foreground">
+              No Care Circle updates about them yet.
+            </p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {state.updates
+                .filter((u) => u.personId === person.id)
+                .map((u) => (
+                  <li key={u.id} className="rounded-2xl bg-muted/60 px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Tag tone="sage">About {person.preferredName || person.name}</Tag>
+                      <span className="text-sm text-muted-foreground">
+                        {u.from} · {u.date}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-base">{u.text}</p>
+                  </li>
+                ))}
+            </ul>
+          )}
+        </div>
       </Card>
 
       <Card>
