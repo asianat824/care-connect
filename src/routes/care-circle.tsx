@@ -15,7 +15,13 @@ import {
 } from "@/components/ui";
 import { useStore } from "@/lib/store";
 import { today, uid } from "@/lib/demo-data";
-import type { Permission } from "@/lib/types";
+import type {
+  HelpRequest,
+  Permission,
+  RecipientResponse,
+  RecipientResponseStatus,
+  RequestStatus,
+} from "@/lib/types";
 import {
   PeopleCareExperience,
   PROFILE_SECTIONS,
