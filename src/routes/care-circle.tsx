@@ -160,6 +160,45 @@ function CareCirclePage() {
   const [editDetail, setEditDetail] = useState("");
   const [editInstructions, setEditInstructions] = useState("");
   const [split, setSplit] = useState<string[]>(["", "", ""]);
+  const [manageOpen, setManageOpen] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
+
+  const recipients = (r: HelpRequest) => recipientsFor(r, state.members);
+  const overallStatus = (r: HelpRequest) => statusFromResponses(r, recipients(r));
+  const assignedTo = (r: HelpRequest) =>
+    recipients(r).find((x) => x.status === "Accepted")?.name ?? "";
+
+  /** Update one recipient's response and keep the request's overall status in step. */
+  const patchResponse = (
+    request: HelpRequest,
+    memberId: string,
+    patch: Partial<RecipientResponse>,
+  ) =>
+    setState((s) => ({
+      ...s,
+      requests: s.requests.map((r) => {
+        if (r.id !== request.id) return r;
+        const base = recipientsFor(r, s.members);
+        let next = base.map((resp) =>
+          resp.memberId === memberId ? { ...resp, ...patch } : resp,
+        );
+        if (patch.status === "Accepted" && !r.allowMultiple) {
+          next = next.map((resp) =>
+            resp.memberId === memberId || resp.status === "Declined"
+              ? resp
+              : { ...resp, status: "Covered by another person" as const, note: undefined },
+          );
+        }
+        const accepted = next.find((resp) => resp.status === "Accepted");
+        return {
+          ...r,
+          responses: next,
+          status: statusFromResponses(r, next),
+          ...(accepted ? { acceptedBy: accepted.name } : {}),
+        };
+      }),
+    }));
 
   const togglePerm = (p: Permission) =>
     setPerms((v) => (v.includes(p) ? v.filter((x) => x !== p) : [...v, p]));
