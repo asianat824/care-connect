@@ -3,12 +3,11 @@ import type { ReactNode } from "react";
 import {
   Heart,
   Home,
-  HeartHandshake,
   Users,
   Sparkles,
   RotateCcw,
   Network,
-  ClipboardList,
+  MessagesSquare,
   UserRound,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
@@ -26,9 +25,8 @@ const familyNav = [
 const paidNav = [
   { to: "/", label: "Home", icon: Home, short: "Home" },
   { to: "/check-in", label: "My Check-In", icon: Heart, short: "Check-In" },
-  { to: "/paid-people", label: "People I Support", icon: HeartHandshake, short: "People" },
-  { to: "/handoff-notes", label: "Handoff Notes", icon: ClipboardList, short: "Handoffs" },
   { to: "/care-team", label: "Care Team", icon: Users, short: "Team" },
+  { to: "/care-connect", label: "Care Connect", icon: MessagesSquare, short: "Connect" },
   { to: "/moments", label: "Care Moments", icon: Sparkles, short: "Moments" },
 ] as const;
 
@@ -138,7 +136,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="mx-auto w-full max-w-4xl px-5 py-8 md:py-12">{children}</main>
       </div>
 
-      <nav className={`fixed inset-x-0 bottom-0 z-20 grid ${state.role === "paid" ? "grid-cols-6" : "grid-cols-5"} border-t border-border bg-card/95 backdrop-blur md:hidden`}>
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-border bg-card/95 backdrop-blur md:hidden">
         {nav.map(({ to, label, icon: Icon, short }) => (
           <Link
             key={to}

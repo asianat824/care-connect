@@ -28,3 +28,12 @@
 - [x] Consolidate People I Care For into My Care Circle tabs and routing
 - [x] Update Connected Care branding and preserve paid role switch
 - [x] Verify family flow, redirects, buttons, and responsive layouts
+
+## Paid caregiver workspace
+- [ ] Reduce paid navigation to five destinations
+- [ ] Consolidate People I Support, Work Team, and Handoff Notes under Care Team
+- [ ] Add functional Work Team support requests with multi-select
+- [ ] Add privacy-safe Care Connect communities and local conversations
+- [ ] Redirect legacy paid routes to the matching Care Team tab
+- [ ] Preserve permissions for Care Moments and private check-ins
+- [ ] Verify paid flow, family regression, persistence, responsive layout, and build
