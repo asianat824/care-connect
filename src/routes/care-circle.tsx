@@ -72,6 +72,70 @@ const PERMISSIONS: Permission[] = [
   "Contribute to Care Moments",
 ];
 
+const RESPONSE_TONES: Record<RecipientResponseStatus, string> = {
+  Accepted: "bg-secondary/50 text-secondary-foreground",
+  Pending: "bg-muted text-foreground",
+  Declined: "bg-accent/25 text-accent-foreground",
+  "Question received": "bg-primary/15 text-foreground",
+  "No response": "bg-muted text-muted-foreground",
+  "Covered by another person": "bg-secondary/35 text-secondary-foreground",
+};
+
+function StatusPill({ status }: { status: RecipientResponseStatus }) {
+  return (
+    <span className={`rounded-full px-3 py-1 text-sm font-medium ${RESPONSE_TONES[status]}`}>
+      {status}
+    </span>
+  );
+}
+
+function defaultNote(status: RecipientResponseStatus) {
+  if (status === "Pending") return "Awaiting response";
+  if (status === "No response") return "No response yet";
+  if (status === "Covered by another person") return "Someone else is covering this";
+  return "";
+}
+
+/** The response rows for a request, derived from older demo data when needed. */
+function recipientsFor(
+  request: HelpRequest,
+  members: { id: string; name: string; role: string }[],
+): RecipientResponse[] {
+  if (request.responses?.length) return request.responses;
+  const declined = request.declinedBy ?? [];
+  return request.visibleTo
+    .map((id) => members.find((m) => m.id === id))
+    .filter((m): m is { id: string; name: string; role: string } => Boolean(m))
+    .map((m) => ({
+      memberId: m.id,
+      name: m.name,
+      role: m.role,
+      status: declined.includes(m.name)
+        ? ("Declined" as const)
+        : request.acceptedBy === m.name
+          ? ("Accepted" as const)
+          : ("Pending" as const),
+    }));
+}
+
+function statusFromResponses(
+  request: HelpRequest,
+  responses: RecipientResponse[],
+): RequestStatus {
+  if (
+    request.status === "Draft" ||
+    request.status === "Cancelled" ||
+    request.status === "Completed"
+  )
+    return request.status;
+  if (!responses.length) return request.status;
+  if (responses.some((x) => x.status === "Accepted")) return "Assigned";
+  if (responses.some((x) => x.status === "Question received")) return "Needs clarification";
+  if (responses.every((x) => x.status === "Declined" || x.status === "No response"))
+    return "Unfilled";
+  return "Sent";
+}
+
 function CareCirclePage() {
   const { state, setState } = useStore();
   const search = Route.useSearch();
