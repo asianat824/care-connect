@@ -120,14 +120,22 @@ function PeopleSupport({ personId, section }: { personId?: string; section?: Pro
           </Button>
         }
         extraHeader={
-          <div className="space-y-4">
-            <Card>
-              <p className="text-base text-muted-foreground">Today&rsquo;s shift · 9:00 AM–6:00 PM</p>
-              <SectionTitle title="Family contacts" />
-              <div className="rounded-2xl border border-border p-4">
+          <p className="text-base text-muted-foreground">Today&rsquo;s shift · 9:00 AM–6:00 PM</p>
+        }
+        careCircleContent={
+          <div className="space-y-5">
+            <SectionTitle
+              title="Ruth’s care circle"
+              subtitle="Family, friends, neighbors, and trusted people helping support Ruth’s care."
+            />
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
                 <p className="font-semibold">Jordan</p>
                 <p className="text-sm text-muted-foreground">Family caregiver</p>
-                <p className="mt-1 text-sm">Receives end-of-shift handoffs</p>
+                <dl className="mt-3 space-y-2 text-sm">
+                  <div><dt className="font-semibold">Role</dt><dd>Primary family contact</dd></div>
+                  <div><dt className="font-semibold">Handoffs</dt><dd>Receives end-of-shift handoffs</dd></div>
+                </dl>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setContactVisible((value) => !value)}>
                     View approved contact information
@@ -175,26 +183,20 @@ function PeopleSupport({ personId, section }: { personId?: string; section?: Pro
                   </div>
                 ) : null}
                 {sentUpdate ? <p className="mt-3 text-sm text-secondary-foreground">Care update sent to Jordan.</p> : null}
-              </div>
-            </Card>
-
-            <Card>
-              <SectionTitle title={`Others supporting ${person.name.split(" ")[0]}`} />
-              <ul className="space-y-3">
-                {state.members
-                  .filter((member) => ["Marcus Ellis", "Denise Park"].includes(member.name))
-                  .map((member) => (
-                    <li key={member.id} className="rounded-2xl border border-border p-4">
-                      <p className="font-semibold">{member.name}</p>
-                      <p className="text-sm text-muted-foreground">{member.role}</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <Tag tone="sage">{member.helpsWith}</Tag>
-                        <Tag>{member.availability}</Tag>
-                      </div>
-                    </li>
-                  ))}
-              </ul>
-            </Card>
+              </Card>
+              {state.members
+                .filter((member) => ["Marcus Ellis", "Denise Park"].includes(member.name))
+                .map((member) => (
+                  <Card key={member.id}>
+                    <p className="font-semibold">{member.name}</p>
+                    <p className="text-sm text-muted-foreground">{member.role}</p>
+                    <dl className="mt-3 space-y-2 text-sm">
+                      <div><dt className="font-semibold">Helps with</dt><dd>{member.helpsWith}</dd></div>
+                      <div><dt className="font-semibold">Availability</dt><dd>{member.availability}</dd></div>
+                    </dl>
+                  </Card>
+                ))}
+            </div>
           </div>
         }
       />
