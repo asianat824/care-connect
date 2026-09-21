@@ -80,6 +80,9 @@ function CareCirclePage() {
   });
   const [perms, setPerms] = useState<Permission[]>(["View basic care information"]);
   const [updateText, setUpdateText] = useState("");
+  const [updateSubject, setUpdateSubject] = useState<string>("p1");
+  const [editingUpdateId, setEditingUpdateId] = useState<string | null>(null);
+  const [deletingUpdateId, setDeletingUpdateId] = useState<string | null>(null);
   const [stuckOpen, setStuckOpen] = useState<string | null>(null);
   const [stuckAction, setStuckAction] = useState<string | null>(null);
   const [showDeclined, setShowDeclined] = useState(false);
