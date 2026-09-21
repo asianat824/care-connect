@@ -187,7 +187,30 @@ export interface Moment {
   date: string;
 }
 
+export type CareRole = "family" | "paid";
+
+export type HandoffUrgency = "Routine" | "Review soon" | "Urgent";
+
+export interface HandoffNote {
+  id: string;
+  personId: string;
+  personName: string;
+  from: string;
+  fromRole: string;
+  submittedAt: string;
+  careCompleted: string[];
+  noticed: string;
+  followUp: string;
+  preferenceChange: string;
+  preferenceNote: string;
+  urgency: HandoffUrgency;
+  sharedWith: string;
+  reviewed: boolean;
+}
+
 export interface AppState {
+  role: CareRole;
+  handoffNotes: HandoffNote[];
   onboarded: boolean;
   caregiverName: string;
   priorities: string[];

@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { AppState } from "./types";
 import { seedState } from "./demo-data";
 
-const KEY = "care-space-demo-v4";
+const KEY = "care-space-demo-v5";
 
 interface Ctx {
   state: AppState;
