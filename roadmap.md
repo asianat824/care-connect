@@ -25,3 +25,6 @@
 - [x] Care Network "When your circle cannot help" + privacy-safe question conversion
 - [x] Care Moments supporting statement
 - [x] Verified demo flow, mobile layout, and build
+- [ ] Consolidate People I Care For into My Care Circle tabs and routing
+- [ ] Update Connected Care branding and preserve paid role switch
+- [ ] Verify family flow, redirects, buttons, and responsive layouts
