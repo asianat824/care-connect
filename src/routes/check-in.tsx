@@ -48,6 +48,43 @@ const BUCKETS: CapacityBucket[] = [
 type SectionId = "how" | "plate" | "capacity" | "delegate";
 
 function CheckInPage() {
+  const { state } = useStore();
+  return state.role === "paid" ? <PaidCheckInPage /> : <FamilyCheckInPage />;
+}
+
+function PaidCheckInPage() {
+  const { state, setState } = useStore();
+  const draft = state.paidCheckInDraft ?? {
+    mood: "Steady",
+    energy: 3,
+    capacity: "I have capacity" as Capacity,
+    note: "",
+  };
+  const [saved, setSaved] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const setDraft = (patch: Partial<typeof draft>) => setState((current) => ({ ...current, paidCheckInDraft: { ...draft, ...patch } }));
+  const save = () => {
+    setState((current) => ({ ...current, paidCheckIns: [{ id: uid(), date: today(), mood: draft.mood, energy: draft.energy, capacity: draft.capacity, forMyself: "", needToday: "", outsideCapacity: "", notes: draft.note, shared: false }, ...(current.paidCheckIns ?? [])] }));
+    setSaved(true);
+  };
+  return (
+    <div className="space-y-6">
+      <header className="flex flex-wrap items-start justify-between gap-3"><div><h1 className="font-display text-4xl">My check-in</h1><p className="mt-2 text-lg text-muted-foreground">A private pause for you. Nothing here is shared with your employer, Work Team, families, or Care Connect.</p></div><Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setHistoryOpen(true)}>View check-in history</Button></header>
+      <Card className="space-y-6">
+        <SectionTitle title="How am I doing?" subtitle="Private by default." />
+        <div><p className="text-base font-medium">Current mood</p><div className="mt-3 flex flex-wrap gap-2">{MOODS.map((mood) => <Chip key={mood} selected={draft.mood === mood} onClick={() => setDraft({ mood })}>{mood}</Chip>)}</div></div>
+        <Field label={`Energy today: ${draft.energy} of 5`}><input type="range" aria-label="Energy level" aria-valuetext={`${draft.energy} out of 5`} min={1} max={5} step={1} value={draft.energy} onChange={(event) => setDraft({ energy: Number(event.target.value) })} className="w-full accent-[var(--color-accent)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring" /><div className="mt-2 flex justify-between text-sm font-medium text-muted-foreground" aria-hidden="true"><span>Very low</span><span>Full</span></div></Field>
+        <div><p className="text-base font-medium">Current capacity</p><div className="mt-3 flex flex-wrap gap-2">{CAPACITIES.map((capacity) => <Chip key={capacity} selected={draft.capacity === capacity} onClick={() => setDraft({ capacity })}>{capacity}</Chip>)}</div></div>
+        <Field label="A private note" hint="Optional. Only Alicia can see this."><Textarea value={draft.note} onChange={(event) => setDraft({ note: event.target.value })} /></Field>
+        <Button onClick={save}>Save this check-in</Button>
+        {saved ? <p className="text-secondary-foreground">Check-in saved privately. Nothing was shared.</p> : null}
+      </Card>
+      {historyOpen ? <div role="dialog" aria-modal="true" aria-label="Your check-in history" className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 p-4 sm:items-center"><Card className="max-h-[80vh] w-full max-w-xl overflow-y-auto"><SectionTitle title="Your check-in history" subtitle="Gentle patterns, not diagnoses." action={<Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setHistoryOpen(false)}>Close</Button>} /><p className="mb-4 text-sm text-muted-foreground">Your check-in history is private and only visible to you.</p>{(state.paidCheckIns ?? []).length ? <ul className="space-y-3">{(state.paidCheckIns ?? []).map((item) => <li key={item.id} className="flex flex-wrap gap-2 rounded-2xl border border-border p-4"><Tag>{item.date}</Tag><Tag>{item.mood}</Tag><Tag tone="sage">Energy {item.energy}/5</Tag><Tag tone="warm">{item.capacity}</Tag></li>)}</ul> : <Empty title="No check-ins yet" body="Your first private check-in will appear here." />}</Card></div> : null}
+    </div>
+  );
+}
+
+function FamilyCheckInPage() {
   const { state, setState } = useStore();
   const navigate = useNavigate();
   const search = Route.useSearch();

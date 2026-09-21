@@ -258,4 +258,11 @@ export interface AppState {
   workTeamRequests?: WorkTeamRequest[];
   careConnectPosts?: CareConnectPost[];
   joinedCareConnectIds?: string[];
+  paidCheckIns?: CheckIn[];
+  paidCheckInDraft?: {
+    mood: string;
+    energy: number;
+    capacity: Capacity;
+    note: string;
+  };
 }

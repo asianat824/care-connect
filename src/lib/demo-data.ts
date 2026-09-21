@@ -90,6 +90,13 @@ export function seedState(): AppState {
     workTeamRequests: [],
     careConnectPosts: [],
     joinedCareConnectIds: [],
+    paidCheckIns: [],
+    paidCheckInDraft: {
+      mood: "Steady",
+      energy: 3,
+      capacity: "I have capacity",
+      note: "",
+    },
     handoffNotes: [
       {
         id: "h1",

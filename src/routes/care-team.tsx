@@ -74,7 +74,7 @@ function CareTeamPage() {
         </p>
       </header>
       <Tabs tabs={[...TABS]} active={tab} onChange={(value) => setTab(value as TeamTab)} />
-      {tab === "People I Support" ? <PeopleSupport personId={search.person} /> : null}
+      {tab === "People I Support" ? <PeopleSupport {...(search.person ? { personId: search.person } : {})} /> : null}
       {tab === "Work Team" ? <WorkTeam /> : null}
       {tab === "Handoff Notes" ? <HandoffNotes startOpen={search.handoff === "new"} /> : null}
     </div>
@@ -86,6 +86,9 @@ function PeopleSupport({ personId }: { personId?: string }) {
   const navigate = useNavigate();
   const person = state.people.find((item) => item.id === personId) ?? state.people[0];
   const [sentUpdate, setSentUpdate] = useState(false);
+  const [updateOpen, setUpdateOpen] = useState(false);
+  const [updateText, setUpdateText] = useState("");
+  const [contactVisible, setContactVisible] = useState(false);
   if (!person) return <Empty title="No one is assigned" body="People assigned to your care will appear here." />;
 
   const detailsOpen = Boolean(personId);
@@ -132,10 +135,12 @@ function PeopleSupport({ personId }: { personId?: string }) {
           <div className="rounded-2xl border border-border p-4">
             <p className="font-semibold">Jordan</p><p className="text-sm text-muted-foreground">Family caregiver</p><p className="mt-1 text-sm">Receives end-of-shift handoffs</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <Button variant="quiet" className="px-4 py-2 text-sm">View approved contact information</Button>
-              <Button variant="support" className="px-4 py-2 text-sm" onClick={() => setSentUpdate(true)}>Send care update</Button>
+              <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setContactVisible((value) => !value)}>View approved contact information</Button>
+              <Button variant="support" className="px-4 py-2 text-sm" onClick={() => setUpdateOpen(true)}>Send care update</Button>
             </div>
-            {sentUpdate ? <p className="mt-3 text-sm text-secondary-foreground">Care update opened for Jordan. Only approved care information can be included.</p> : null}
+            {contactVisible ? <p className="mt-3 text-sm text-foreground">Approved contact: jordan@example.com · (555) 014-1182</p> : null}
+            {updateOpen ? <div className="mt-4 space-y-3"><Field label="Care update for Mama Ruth"><Textarea value={updateText} onChange={(event) => setUpdateText(event.target.value)} placeholder="Share an approved care update" /></Field><div className="flex flex-wrap gap-2"><Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setUpdateOpen(false)}>Cancel</Button><Button className="px-4 py-2 text-sm" disabled={!updateText.trim()} onClick={() => { setState((current) => ({ ...current, updates: [{ id: uid(), from: "Alicia Boateng", date: today(), text: updateText.trim(), personId: person.id }, ...current.updates] })); setUpdateText(""); setUpdateOpen(false); setSentUpdate(true); }}>Send update</Button></div></div> : null}
+            {sentUpdate ? <p className="mt-3 text-sm text-secondary-foreground">Care update sent to Jordan.</p> : null}
           </div>
         </Card>
 

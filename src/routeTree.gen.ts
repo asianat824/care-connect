@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CareCircleRouteImport } from './routes/care-circle'
+import { Route as CareConnectRouteImport } from './routes/care-connect'
 import { Route as CareNetworkRouteImport } from './routes/care-network'
 import { Route as CareTeamRouteImport } from './routes/care-team'
 import { Route as CheckInRouteImport } from './routes/check-in'
@@ -30,6 +31,11 @@ const IndexRoute = IndexRouteImport.update({
 const CareCircleRoute = CareCircleRouteImport.update({
   id: '/care-circle',
   path: '/care-circle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CareConnectRoute = CareConnectRouteImport.update({
+  id: '/care-connect',
+  path: '/care-connect',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CareNetworkRoute = CareNetworkRouteImport.update({
@@ -86,6 +92,7 @@ const VoiceGuestPersonIdRoute = VoiceGuestPersonIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/care-circle': typeof CareCircleRoute
+  '/care-connect': typeof CareConnectRoute
   '/care-network': typeof CareNetworkRoute
   '/care-team': typeof CareTeamRoute
   '/check-in': typeof CheckInRoute
@@ -100,6 +107,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/care-circle': typeof CareCircleRoute
+  '/care-connect': typeof CareConnectRoute
   '/care-network': typeof CareNetworkRoute
   '/care-team': typeof CareTeamRoute
   '/check-in': typeof CheckInRoute
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/care-circle': typeof CareCircleRoute
+  '/care-connect': typeof CareConnectRoute
   '/care-network': typeof CareNetworkRoute
   '/care-team': typeof CareTeamRoute
   '/check-in': typeof CheckInRoute
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/care-circle'
+    | '/care-connect'
     | '/care-network'
     | '/care-team'
     | '/check-in'
@@ -145,6 +155,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/care-circle'
+    | '/care-connect'
     | '/care-network'
     | '/care-team'
     | '/check-in'
@@ -159,6 +170,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/care-circle'
+    | '/care-connect'
     | '/care-network'
     | '/care-team'
     | '/check-in'
@@ -174,6 +186,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CareCircleRoute: typeof CareCircleRoute
+  CareConnectRoute: typeof CareConnectRoute
   CareNetworkRoute: typeof CareNetworkRoute
   CareTeamRoute: typeof CareTeamRoute
   CheckInRoute: typeof CheckInRoute
@@ -200,6 +213,13 @@ declare module '@tanstack/react-router' {
       path: '/care-circle'
       fullPath: '/care-circle'
       preLoaderRoute: typeof CareCircleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/care-connect': {
+      id: '/care-connect'
+      path: '/care-connect'
+      fullPath: '/care-connect'
+      preLoaderRoute: typeof CareConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/care-network': {
@@ -278,6 +298,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CareCircleRoute: CareCircleRoute,
+  CareConnectRoute: CareConnectRoute,
   CareNetworkRoute: CareNetworkRoute,
   CareTeamRoute: CareTeamRoute,
   CheckInRoute: CheckInRoute,
