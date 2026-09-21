@@ -442,7 +442,11 @@ function FamilyHome() {
       <Card className="bg-accent/12">
         <SectionTitle title="A care moment" subtitle="Connection is care." />
         <p className="font-display text-2xl">{prompt}</p>
-        <Link to="/moments" className="mt-5 block">
+        <Link
+          to="/care-circle"
+          search={{ tab: "People I Care For", person: state.people[0]?.id ?? "", section: "Care Moments" }}
+          className="mt-5 block"
+        >
           <Button variant="connect">Answer this together</Button>
         </Link>
       </Card>
