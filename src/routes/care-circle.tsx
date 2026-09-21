@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   Avatar,
@@ -16,17 +16,29 @@ import {
 import { useStore } from "@/lib/store";
 import { today, uid } from "@/lib/demo-data";
 import type { Permission } from "@/lib/types";
+import { PeopleCareExperience } from "@/components/PeopleCareExperience";
 
 export const Route = createFileRoute("/care-circle")({
+  validateSearch: (search: Record<string, unknown>) => {
+    const tabs = ["People I Care For", "Care Team", "Requests", "Care Updates"] as const;
+    const tab = tabs.includes(search["tab"] as (typeof tabs)[number])
+      ? (search["tab"] as (typeof tabs)[number])
+      : "People I Care For";
+    return {
+      ...(search["tab"] ? { tab } : {}),
+      ...(typeof search["person"] === "string" ? { person: search["person"] } : {}),
+      ...(typeof search["detail"] === "string" ? { detail: search["detail"] } : {}),
+    };
+  },
   head: () => ({
     meta: [
-      { title: "My Care Circle — [PROJECT NAME]" },
+      { title: "My Care Circle — Connected Care" },
       {
         name: "description",
         content:
           "Invite trusted people, manage permissions, share requests and updates, and pass along warm handoffs.",
       },
-      { property: "og:title", content: "My Care Circle — [PROJECT NAME]" },
+      { property: "og:title", content: "My Care Circle — Connected Care" },
       {
         property: "og:description",
         content: "A trusted circle for requests, offers, updates, and warm handoffs.",
@@ -39,11 +51,11 @@ export const Route = createFileRoute("/care-circle")({
 });
 
 const TABS = [
-  "Members",
+  "People I Care For",
+  "Care Team",
   "Requests",
-  "Updates",
-  "Handoffs",
-];
+  "Care Updates",
+] as const;
 
 const PERMISSIONS: Permission[] = [
   "View basic care information",
@@ -55,7 +67,9 @@ const PERMISSIONS: Permission[] = [
 
 function CareCirclePage() {
   const { state, setState } = useStore();
-  const [tab, setTab] = useState(TABS[0] ?? "");
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+  const tab = search.tab ?? "People I Care For";
   const [inviting, setInviting] = useState(false);
   const [form, setForm] = useState({
     name: "",
@@ -92,18 +106,40 @@ function CareCirclePage() {
       requests: s.requests.map((r) => (r.id === id ? { ...r, ...patch } : r)),
     }));
 
+  const setTab = (next: string) => {
+    const safeTab: (typeof TABS)[number] = TABS.includes(next as (typeof TABS)[number])
+      ? (next as (typeof TABS)[number])
+      : "People I Care For";
+    navigate({ to: "/care-circle", search: { tab: safeTab } });
+  };
+
+  const markHandoffReviewed = (id: string) =>
+    setState((s) => ({
+      ...s,
+      handoffNotes: s.handoffNotes.map((note) =>
+        note.id === id ? { ...note, reviewed: true } : note,
+      ),
+    }));
+
   return (
     <div className="space-y-8">
       <header>
         <h1 className="font-display text-4xl">My care circle</h1>
         <p className="mt-2 text-lg text-muted-foreground">
-          The people who show up. Everyone sees only what you allow.
+          Everyone involved in care, connected in one place. Each person sees only what you allow.
         </p>
       </header>
 
-      <Tabs tabs={TABS} active={tab} onChange={setTab} />
+      <Tabs tabs={[...TABS]} active={tab} onChange={setTab} />
 
-      {tab === "Members" && (
+      {tab === "People I Care For" && (
+        <PeopleCareExperience
+          {...(search.person ? { person: search.person } : {})}
+          {...(search.detail ? { detail: search.detail } : {})}
+        />
+      )}
+
+      {tab === "Care Team" && (
         <div className="space-y-4">
           {state.members.map((m) => (
             <Card key={m.id}>
@@ -458,7 +494,7 @@ function CareCirclePage() {
         </div>
       )}
 
-      {tab === "Updates" && (
+      {tab === "Care Updates" && (
         <div className="space-y-4">
           <Card className="space-y-3">
             <SectionTitle title="Share an update" subtitle="Goes to members who can view updates." />
@@ -499,11 +535,36 @@ function CareCirclePage() {
               </Card>
             )),
           )}
+          {state.handoffNotes.map((note) => (
+            <Card key={note.id} className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Tag tone="sage">Paid-caregiver handoff</Tag>
+                <Tag>{note.personName}</Tag>
+                <Tag tone="warm">Urgency: {note.urgency}</Tag>
+                {note.reviewed ? <Tag>Reviewed</Tag> : null}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Shared by {note.from}, {note.fromRole} · {note.submittedAt} · Shared with {note.sharedWith}
+              </p>
+              <p className="text-base"><strong>Care completed:</strong> {note.careCompleted.join(", ") || "—"}</p>
+              <p className="text-base"><strong>What was observed:</strong> {note.noticed}</p>
+              <p className="text-base"><strong>Follow-up:</strong> {note.followUp}</p>
+              {note.preferenceChange !== "No change" ? (
+                <p className="text-base"><strong>{note.preferenceChange}:</strong> {note.preferenceNote}</p>
+              ) : null}
+              {!note.reviewed ? (
+                <Button variant="support" onClick={() => markHandoffReviewed(note.id)}>
+                  Mark as reviewed
+                </Button>
+              ) : null}
+            </Card>
+          ))}
         </div>
       )}
 
-      {tab === "Handoffs" && (
+      {tab === "Care Updates" && (
         <div className="space-y-4">
+          <SectionTitle title="Warm handoffs" subtitle="Prepared summaries for continuity of care." />
           {state.handoffs.length === 0 ? (
             <Empty
               title="No handoffs yet"

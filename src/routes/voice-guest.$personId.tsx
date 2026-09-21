@@ -7,9 +7,9 @@ import type { DetailKey } from "@/lib/types";
 
 export const Route = createFileRoute("/voice-guest/$personId")({
   head: () => ({ meta: [
-    { title: "Share Your Voice — [PROJECT NAME]" },
+    { title: "Share Your Voice — Connected Care" },
     { name: "description", content: "A private, limited invitation to share what helps you feel comfortable, respected, and understood." },
-    { property: "og:title", content: "Your voice matters here — [PROJECT NAME]" },
+    { property: "og:title", content: "Your voice matters here — Connected Care" },
     { property: "og:description", content: "A private response shared only with the caregiver who invited you." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },

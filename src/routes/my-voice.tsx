@@ -12,13 +12,13 @@ export const Route = createFileRoute("/my-voice")({
   } as { person?: string; mode?: "together" }),
   head: () => ({
     meta: [
-      { title: "My Voice — [PROJECT NAME]" },
+      { title: "My Voice — Connected Care" },
       {
         name: "description",
         content:
           "A simple, accessible space for the person receiving care to share preferences, feelings, and memories in their own words.",
       },
-      { property: "og:title", content: "My Voice — [PROJECT NAME]" },
+      { property: "og:title", content: "My Voice — Connected Care" },
       {
         property: "og:description",
         content: "In their own words: preferences, feelings, and memories.",
@@ -54,7 +54,7 @@ function MyVoicePage() {
         title="My Voice isn't turned on yet"
         body="Open a person's profile and choose “Invite them to contribute” to turn this on."
         action={
-          <Link to="/people">
+          <Link to="/care-circle" search={{ tab: "People I Care For" }}>
             <Button>Go to profiles</Button>
           </Link>
         }
@@ -155,7 +155,7 @@ function MyVoicePage() {
         )}
       </Card>
 
-      <Link to="/people" className="block text-lg underline underline-offset-4">
+      <Link to="/care-circle" search={{ tab: "People I Care For", person: current.id }} className="block text-lg underline underline-offset-4">
         ← Back to the caregiver view
       </Link>
     </div>

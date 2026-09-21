@@ -6,12 +6,12 @@ import { sourceLabel } from "@/lib/details";
 export const Route = createFileRoute("/paid-people")({
   head: () => ({
     meta: [
-      { title: "People I Support — Connection Is Care" },
+      { title: "People I Support — Connected Care" },
       {
         name: "description",
         content: "The care preferences a family caregiver has chosen to share with you.",
       },
-      { property: "og:title", content: "People I Support — Connection Is Care" },
+      { property: "og:title", content: "People I Support — Connected Care" },
       {
         property: "og:description",
         content: "Shared preferences and communication needs for the people you support.",

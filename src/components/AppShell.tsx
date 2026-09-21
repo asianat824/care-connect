@@ -18,7 +18,6 @@ import type { CareRole } from "@/lib/types";
 const familyNav = [
   { to: "/", label: "Home", icon: Home, short: "Home" },
   { to: "/check-in", label: "My Check-In", icon: Heart, short: "Check-In" },
-  { to: "/people", label: "People I Care For", icon: HeartHandshake, short: "People" },
   { to: "/care-circle", label: "My Care Circle", icon: Users, short: "Circle" },
   { to: "/care-network", label: "Care Network", icon: Network, short: "Network" },
   { to: "/moments", label: "Care Moments", icon: Sparkles, short: "Moments" },
@@ -87,7 +86,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen md:flex">
       <aside className="hidden w-72 shrink-0 flex-col border-r border-border bg-card/70 px-5 py-8 md:flex">
-        <p className="font-display text-xl text-foreground">Connection Is Care</p>
+        <p className="font-display text-xl text-foreground">Connected Care</p>
         <p className="mt-1 text-sm text-muted-foreground">Connection is care.</p>
         <ProfileCard />
         <nav className="mt-6 flex flex-col gap-1">
@@ -116,7 +115,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex-1 pb-28 md:pb-0">
         <header className="border-b border-border bg-card/70 px-5 py-4 md:hidden">
           <div className="flex items-center justify-between">
-            <p className="font-display text-lg">Connection Is Care</p>
+            <p className="font-display text-lg">Connected Care</p>
             <button onClick={reset} className="text-sm text-muted-foreground">
               Reset demo
             </button>
@@ -139,7 +138,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="mx-auto w-full max-w-4xl px-5 py-8 md:py-12">{children}</main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-6 border-t border-border bg-card/95 backdrop-blur md:hidden">
+      <nav className={`fixed inset-x-0 bottom-0 z-20 grid ${state.role === "paid" ? "grid-cols-6" : "grid-cols-5"} border-t border-border bg-card/95 backdrop-blur md:hidden`}>
         {nav.map(({ to, label, icon: Icon, short }) => (
           <Link
             key={to}

@@ -8,13 +8,13 @@ import type { Moment } from "@/lib/types";
 export const Route = createFileRoute("/moments")({
   head: () => ({
     meta: [
-      { title: "Care Moments — [PROJECT NAME]" },
+      { title: "Care Moments — Connected Care" },
       {
         name: "description",
         content:
           "A digital memory box for songs, stories, photos, and the moments that keep the relationship alive.",
       },
-      { property: "og:title", content: "Care Moments — [PROJECT NAME]" },
+      { property: "og:title", content: "Care Moments — Connected Care" },
       { property: "og:description", content: "Connection is care. Songs, stories, and memories." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

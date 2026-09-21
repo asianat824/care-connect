@@ -4,7 +4,7 @@
 - [x] Expand source labels for together, conversation, observation, circle, and confirmation
 - [x] Add Care Network navigation and page with peer, resource, and local support
 - [x] Remove Care Network content from My Care Circle
-- [ ] Verify privacy boundaries, accessibility, mobile/desktop layouts, and build
+- [x] Verify privacy boundaries, accessibility, mobile/desktop layouts, and build
 - [x] Add a printable one-page care summary for each person with selected current details and confirmation dates
 
 # Refinement roadmap
@@ -25,6 +25,6 @@
 - [x] Care Network "When your circle cannot help" + privacy-safe question conversion
 - [x] Care Moments supporting statement
 - [x] Verified demo flow, mobile layout, and build
-- [ ] Consolidate People I Care For into My Care Circle tabs and routing
-- [ ] Update Connected Care branding and preserve paid role switch
-- [ ] Verify family flow, redirects, buttons, and responsive layouts
+- [x] Consolidate People I Care For into My Care Circle tabs and routing
+- [x] Update Connected Care branding and preserve paid role switch
+- [x] Verify family flow, redirects, buttons, and responsive layouts

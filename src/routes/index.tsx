@@ -17,12 +17,12 @@ import { PaidHome } from "@/components/PaidHome";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Home — [PROJECT NAME]" },
+      { title: "Home — Connected Care" },
       {
         name: "description",
         content: "Your calm daily view: how you're holding up, who needs you, and what's next.",
       },
-      { property: "og:title", content: "Home — [PROJECT NAME]" },
+      { property: "og:title", content: "Home — Connected Care" },
       {
         property: "og:description",
         content: "A calm daily view for caregivers: capacity, people, requests, and care moments.",
@@ -151,7 +151,7 @@ function CheckBackSection() {
                 >
                   Still accurate
                 </Button>
-                <Link to="/people" search={{ person: person.id, detail: detail.id }}>
+                <Link to="/care-circle" search={{ tab: "People I Care For", person: person.id, detail: detail.id }}>
                   <Button variant="quiet" className="px-4 py-2 text-sm">
                     Update this
                   </Button>
@@ -365,7 +365,7 @@ function FamilyHome() {
         <SectionTitle
           title="People I care for"
           action={
-            <Link to="/people" className="text-base underline underline-offset-4">
+            <Link to="/care-circle" search={{ tab: "People I Care For" }} className="text-base underline underline-offset-4">
               Open profiles
             </Link>
           }
@@ -374,8 +374,8 @@ function FamilyHome() {
           {state.people.map((p) => (
             <Link
               key={p.id}
-              to="/people"
-              search={{ person: p.id }}
+              to="/care-circle"
+              search={{ tab: "People I Care For", person: p.id }}
               className="flex items-center gap-3 rounded-2xl border border-border px-4 py-3 hover:bg-muted"
             >
               <Avatar name={p.name} photo={p.photo} />
@@ -392,7 +392,7 @@ function FamilyHome() {
         <SectionTitle
           title="Current requests for help"
           action={
-            <Link to="/care-circle" className="text-base underline underline-offset-4">
+            <Link to="/care-circle" search={{ tab: "Requests" }} className="text-base underline underline-offset-4">
               Care circle
             </Link>
           }

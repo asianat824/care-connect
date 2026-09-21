@@ -12,9 +12,9 @@ export const Route = createFileRoute("/care-network")({
     return out;
   },
   head: () => ({ meta: [
-    { title: "Care Network — [PROJECT NAME]" },
+    { title: "Care Network — Connected Care" },
     { name: "description", content: "Peer caregiver support, practical resources, and local programs beyond your immediate care circle." },
-    { property: "og:title", content: "Care Network — [PROJECT NAME]" },
+    { property: "og:title", content: "Care Network — Connected Care" },
     { property: "og:description", content: "Find support from people and resources beyond your immediate care circle." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
