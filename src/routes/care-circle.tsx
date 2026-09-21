@@ -278,60 +278,82 @@ function CareCirclePage() {
                     </p>
                   ))}
 
-                  <div className="flex flex-wrap gap-2">
-                    {(r.status === "Sent" || r.status === "Draft") &&
-                      r.visibleTo.map((id) => {
-                        const m = state.members.find((x) => x.id === id);
-                        if (!m || declined.includes(m.name)) return null;
-                        return (
-                          <div key={id} className="flex flex-wrap gap-2">
-                            <Button
-                              variant="support"
-                              className="px-4 py-2 text-sm"
-                              onClick={() => setRequest(r.id, { status: "Accepted", acceptedBy: m.name })}
-                            >
-                              Accept as {m.name}
-                            </Button>
+                  <div className="rounded-2xl border border-border bg-muted/30 p-4">
+                    <p className="font-display text-xl">Responses</p>
+                    <ul className="mt-3 space-y-2">
+                      {recipients(r).map((resp) => (
+                        <li
+                          key={resp.memberId}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-card px-4 py-3"
+                        >
+                          <span>
+                            <span className="block text-base font-medium">{resp.name}</span>
+                            <span className="block text-sm text-muted-foreground">{resp.role}</span>
+                          </span>
+                          <span className="flex flex-wrap items-center gap-2">
+                            <StatusPill status={resp.status} />
+                            <span className="text-sm text-muted-foreground">
+                              {resp.note ?? defaultNote(resp.status)}
+                            </span>
+                          </span>
+                        </li>
+                      ))}
+                      {recipients(r).length === 0 ? (
+                        <li className="text-base text-muted-foreground">No one has been asked yet.</li>
+                      ) : null}
+                    </ul>
+
+                    {recipients(r)
+                      .filter((resp) => resp.status === "Question received" && resp.question)
+                      .map((resp) => (
+                        <div key={`q-${resp.memberId}`} className="mt-3 rounded-2xl bg-card p-4">
+                          <p className="text-base font-medium">Question from {resp.name}</p>
+                          <p className="mt-1 text-base">{resp.question}</p>
+                          {resp.reply ? (
+                            <p className="mt-2 text-base text-muted-foreground">Your reply: {resp.reply}</p>
+                          ) : null}
+                          {replyingTo === `${r.id}:${resp.memberId}` ? (
+                            <div className="mt-3 space-y-2">
+                              <Textarea
+                                aria-label={`Reply to ${resp.name}`}
+                                value={replyText}
+                                onChange={(e) => setReplyText(e.target.value)}
+                              />
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  className="px-4 py-2 text-sm"
+                                  disabled={!replyText.trim()}
+                                  onClick={() => {
+                                    patchResponse(r, resp.memberId, { reply: replyText.trim() });
+                                    setReplyText("");
+                                    setReplyingTo(null);
+                                  }}
+                                >
+                                  Send reply
+                                </Button>
+                                <Button variant="ghost" className="px-4 py-2 text-sm" onClick={() => setReplyingTo(null)}>
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
                             <Button
                               variant="quiet"
-                              className="px-4 py-2 text-sm"
+                              className="mt-3 px-4 py-2 text-sm"
                               onClick={() => {
-                                const rest = r.visibleTo.filter((x) => x !== id);
-                                setRequest(r.id, {
-                                  declinedBy: [...declined, m.name],
-                                  status: rest.length ? "Sent" : "Declined",
-                                });
+                                setReplyingTo(`${r.id}:${resp.memberId}`);
+                                setReplyText(resp.reply ?? "");
                               }}
                             >
-                              Decline as {m.name}
+                              Reply
                             </Button>
-                            <Button
-                              variant="quiet"
-                              className="px-4 py-2 text-sm"
-                              onClick={() =>
-                                setRequest(r.id, {
-                                  questions: [
-                                    ...(r.questions ?? []),
-                                    { id: uid(), from: m.name, text: "What time works best?" },
-                                  ],
-                                })
-                              }
-                            >
-                              Ask a question as {m.name}
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    {r.status === "Sent" ? (
-                      <Button
-                        variant="ghost"
-                        className="px-4 py-2 text-sm"
-                        onClick={() => setRequest(r.id, { status: "No response" })}
-                      >
-                        Mark as no response
-                      </Button>
-                    ) : null}
-                    {r.status === "Accepted" ? (
+                          )}
+                        </div>
+                      ))}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {overallStatus(r) === "Assigned" ? (
                       <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setRequest(r.id, { status: "Completed" })}>
                         Mark complete
                       </Button>
@@ -341,7 +363,46 @@ function CareCirclePage() {
                         Cancel request
                       </Button>
                     ) : null}
+                    {r.status !== "Completed" && r.status !== "Cancelled" ? (
+                      <Button
+                        variant="ghost"
+                        className="px-3 py-2 text-sm"
+                        aria-expanded={manageOpen === r.id}
+                        onClick={() => setManageOpen(manageOpen === r.id ? null : r.id)}
+                      >
+                        Manage request
+                      </Button>
+                    ) : null}
                   </div>
+
+                  {manageOpen === r.id ? (
+                    <div className="rounded-2xl border border-border bg-card p-4">
+                      <p className="text-sm text-muted-foreground">
+                        Quiet options for keeping this request tidy.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {recipients(r)
+                          .filter((resp) => resp.status === "Pending")
+                          .map((resp) => (
+                            <Chip
+                              key={`nr-${resp.memberId}`}
+                              className="px-3 py-1.5 text-sm"
+                              onClick={() =>
+                                patchResponse(r, resp.memberId, {
+                                  status: "No response",
+                                  note: "No response yet",
+                                })
+                              }
+                            >
+                              Mark no response · {resp.name}
+                            </Chip>
+                          ))}
+                        {recipients(r).every((resp) => resp.status !== "Pending") ? (
+                          <p className="text-base text-muted-foreground">Everyone has responded.</p>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
 
                   {stuck ? (
                     <div className="rounded-2xl border border-border bg-muted/50 p-4">
