@@ -4,7 +4,6 @@ import {
   Heart,
   Home,
   Users,
-  Sparkles,
   RotateCcw,
   Network,
   MessagesSquare,
@@ -19,7 +18,6 @@ const familyNav = [
   { to: "/check-in", label: "My Check-In", icon: Heart, short: "Check-In" },
   { to: "/care-circle", label: "My Care Circle", icon: Users, short: "Circle" },
   { to: "/care-network", label: "Care Network", icon: Network, short: "Network" },
-  { to: "/moments", label: "Care Moments", icon: Sparkles, short: "Moments" },
 ] as const;
 
 const paidNav = [
@@ -27,7 +25,6 @@ const paidNav = [
   { to: "/check-in", label: "My Check-In", icon: Heart, short: "Check-In" },
   { to: "/care-team", label: "Care Team", icon: Users, short: "Team" },
   { to: "/care-connect", label: "Care Connect", icon: MessagesSquare, short: "Connect" },
-  { to: "/moments", label: "Care Moments", icon: Sparkles, short: "Moments" },
 ] as const;
 
 export const ROLE_PROFILE: Record<CareRole, { initials: string; name: string; role: string }> = {
@@ -136,7 +133,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="mx-auto w-full max-w-4xl px-5 py-8 md:py-12">{children}</main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-border bg-card/95 backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-border bg-card/95 backdrop-blur md:hidden">
         {nav.map(({ to, label, icon: Icon, short }) => (
           <Link
             key={to}

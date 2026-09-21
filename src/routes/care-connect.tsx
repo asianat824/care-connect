@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Button, Card, Field, Input, SectionTitle, Tabs, Tag, Textarea } from "@/components/ui";
 import { today, uid } from "@/lib/demo-data";
 import { useStore } from "@/lib/store";
 import type { CareConnectPost } from "@/lib/types";
+import { deidentifyCareConnectPost, type DeidentifyResult } from "@/lib/care-connect.functions";
 
 const TABS = ["Workplace Community", "Caregiver Community"] as const;
 type ConnectTab = (typeof TABS)[number];
@@ -48,14 +50,33 @@ function CareConnectPage() {
   const [topic, setTopic] = useState("");
   const [body, setBody] = useState("");
   const [joined, setJoined] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [review, setReview] = useState<DeidentifyResult | null>(null);
+  const runDeidentify = useServerFn(deidentifyCareConnectPost);
+
+  const checkDraft = async () => {
+    if (!topic.trim() || !body.trim()) return;
+    setChecking(true);
+    setReview(null);
+    try {
+      const result = await runDeidentify({ data: { topic: topic.trim(), body: body.trim() } });
+      setReview(result);
+    } catch {
+      setReview({ topic: topic.trim(), body: body.trim(), changes: [], error: "The review could not be completed." });
+    } finally {
+      setChecking(false);
+    }
+  };
   const examples = tab === "Workplace Community" ? WORKPLACE : COMMUNITY;
   const localPosts = (state.careConnectPosts ?? []).filter((post) => post.community === tab);
 
-  const save = () => {
-    if (!topic.trim() || !body.trim()) return;
-    const post: CareConnectPost = { id: uid(), community: tab, topic: topic.trim(), body: body.trim(), responses: 0, author: "Alicia", date: today() };
+  const save = (useReviewed: boolean) => {
+    const finalTopic = useReviewed && review ? review.topic : topic.trim();
+    const finalBody = useReviewed && review ? review.body : body.trim();
+    if (!finalTopic || !finalBody) return;
+    const post: CareConnectPost = { id: uid(), community: tab, topic: finalTopic, body: finalBody, responses: 0, author: "Alicia", date: today() };
     setState((current) => ({ ...current, careConnectPosts: [post, ...(current.careConnectPosts ?? [])] }));
-    setTopic(""); setBody(""); setStarting(false);
+    setTopic(""); setBody(""); setReview(null); setStarting(false);
   };
   const join = (id: string) => {
     setJoined(id);
@@ -93,7 +114,41 @@ function CareConnectPage() {
         <div role="dialog" aria-modal="true" aria-label="Start a conversation" className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 p-4 sm:items-center">
           <Card className="max-h-[85vh] w-full max-w-xl overflow-y-auto">
             <SectionTitle title="Start a conversation" subtitle={`Post to ${tab}.`} />
-            <div className="space-y-4"><Field label="Topic"><Input value={topic} onChange={(event) => setTopic(event.target.value)} /></Field><Field label="What would you like to ask or share?"><Textarea value={body} onChange={(event) => setBody(event.target.value)} /></Field><p className="rounded-2xl bg-accent/12 p-4 text-sm">Do not include identifying care-recipient information or details from handoffs, support requests, or private check-ins.</p><div className="flex flex-wrap gap-2"><Button variant="quiet" onClick={() => setStarting(false)}>Cancel</Button><Button disabled={!topic.trim() || !body.trim()} onClick={save}>Post conversation</Button></div></div>
+            <div className="space-y-4">
+              <Field label="Topic"><Input value={topic} onChange={(event) => { setTopic(event.target.value); setReview(null); }} /></Field>
+              <Field label="What would you like to ask or share?"><Textarea value={body} onChange={(event) => { setBody(event.target.value); setReview(null); }} /></Field>
+              <p className="rounded-2xl bg-accent/12 p-4 text-sm">Do not include identifying care-recipient information or details from handoffs, support requests, or private check-ins.</p>
+              <div className="rounded-2xl border border-border p-4">
+                <p className="text-base font-semibold">Check before you post</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  A privacy check reads your draft and rewrites anything that could identify the person you support.
+                </p>
+                <Button variant="support" className="mt-3 px-4 py-2 text-sm" disabled={!topic.trim() || !body.trim() || checking} onClick={() => void checkDraft()}>
+                  {checking ? "Checking your draft…" : "Remove identifying details"}
+                </Button>
+                {review ? (
+                  review.error ? (
+                    <p className="mt-3 text-sm text-foreground">{review.error} You can still edit and post your own words.</p>
+                  ) : (
+                    <div className="mt-4 space-y-3 rounded-2xl bg-muted/50 p-4">
+                      <p className="text-sm font-semibold">Suggested safe version</p>
+                      <p className="text-base font-medium">{review.topic}</p>
+                      <p className="text-base">{review.body}</p>
+                      {review.changes.length ? (
+                        <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                          {review.changes.map((change) => <li key={change}>{change}</li>)}
+                        </ul>
+                      ) : <p className="text-sm text-muted-foreground">Nothing identifying was found.</p>}
+                      <Button className="px-4 py-2 text-sm" onClick={() => save(true)}>Post the safe version</Button>
+                    </div>
+                  )
+                ) : null}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="quiet" onClick={() => { setStarting(false); setReview(null); }}>Cancel</Button>
+                <Button variant="quiet" disabled={!topic.trim() || !body.trim()} onClick={() => save(false)}>Post my own wording</Button>
+              </div>
+            </div>
           </Card>
         </div>
       ) : null}

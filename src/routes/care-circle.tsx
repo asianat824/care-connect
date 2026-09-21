@@ -16,7 +16,11 @@ import {
 import { useStore } from "@/lib/store";
 import { today, uid } from "@/lib/demo-data";
 import type { Permission } from "@/lib/types";
-import { PeopleCareExperience } from "@/components/PeopleCareExperience";
+import {
+  PeopleCareExperience,
+  PROFILE_SECTIONS,
+  type ProfileSection,
+} from "@/components/PeopleCareExperience";
 
 export const Route = createFileRoute("/care-circle")({
   validateSearch: (search: Record<string, unknown>) => {
@@ -28,6 +32,9 @@ export const Route = createFileRoute("/care-circle")({
       ...(search["tab"] ? { tab } : {}),
       ...(typeof search["person"] === "string" ? { person: search["person"] } : {}),
       ...(typeof search["detail"] === "string" ? { detail: search["detail"] } : {}),
+      ...(PROFILE_SECTIONS.includes(search["section"] as ProfileSection)
+        ? { section: search["section"] as ProfileSection }
+        : {}),
     };
   },
   head: () => ({
@@ -144,6 +151,7 @@ function CareCirclePage() {
         <PeopleCareExperience
           {...(search.person ? { person: search.person } : {})}
           {...(search.detail ? { detail: search.detail } : {})}
+          {...(search.section ? { section: search.section } : {})}
         />
       )}
 

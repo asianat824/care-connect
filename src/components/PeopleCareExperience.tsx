@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Avatar,
   Button,
@@ -9,9 +9,12 @@ import {
   Field,
   Input,
   SectionTitle,
+  Tabs,
   Tag,
   Textarea,
 } from "@/components/ui";
+import { SharedCareConversation, currentAuthor } from "@/components/SharedCareConversation";
+import { CareMomentsSection } from "@/components/CareMomentsSection";
 import { useStore } from "@/lib/store";
 import { today, uid } from "@/lib/demo-data";
 import {
@@ -26,7 +29,14 @@ import {
   sourceLabel,
   type ReviewChoice,
 } from "@/lib/details";
-import type { Detail, DetailKey, DetailSource, DetailStatus, Person } from "@/lib/types";
+import type {
+  ConversationEntry,
+  Detail,
+  DetailKey,
+  DetailSource,
+  DetailStatus,
+  Person,
+} from "@/lib/types";
 
 const DETAIL_SECTIONS: DetailKey[] = [
   "whatMatters",
@@ -60,7 +70,7 @@ const isHealthRelated = (text: string) =>
 
 type VoiceChoice = "request" | "together" | "conversation" | "observation";
 
-export function PeopleCareExperience({ person: personParam, detail: detailParam }: { person?: string; detail?: string }) {
+export function PeopleCareExperience({ person: personParam, detail: detailParam, section: sectionParam }: { person?: string; detail?: string; section?: ProfileSection }) {
   const { state, setState } = useStore();
   const navigate = useNavigate();
   const [adding, setAdding] = useState(false);
@@ -69,7 +79,7 @@ export function PeopleCareExperience({ person: personParam, detail: detailParam 
 
   const selected = state.people.find((p) => p.id === personParam);
   if (selected) {
-    return <PersonDetail person={selected} {...(detailParam ? { detailParam } : {})} />;
+    return <PersonProfile person={selected} {...(detailParam ? { detailParam } : {})} {...(sectionParam ? { initialSection: sectionParam } : {})} />;
   }
 
   const addPerson = () => {
@@ -355,9 +365,31 @@ function DetailCard({
   );
 }
 
-function PersonDetail({ person, detailParam }: { person: Person; detailParam?: string }) {
+export const PROFILE_SECTIONS = [
+  "Current priorities",
+  "What matters",
+  "Shared Care Conversation",
+  "Care Moments",
+] as const;
+
+export type ProfileSection = (typeof PROFILE_SECTIONS)[number];
+
+export function PersonProfile({
+  person,
+  detailParam,
+  initialSection,
+  backLink,
+  extraHeader,
+}: {
+  person: Person;
+  detailParam?: string;
+  initialSection?: ProfileSection;
+  backLink?: ReactNode;
+  extraHeader?: ReactNode;
+}) {
   const { state, setState } = useStore();
   const navigate = useNavigate();
+  const [section, setSection] = useState<ProfileSection>(initialSection ?? "Current priorities");
   const [openForm, setOpenForm] = useState<DetailKey | null>(null);
   const [editing, setEditing] = useState<string | null>(detailParam ?? null);
   const [draft, setDraft] = useState("");
@@ -370,6 +402,9 @@ function PersonDetail({ person, detailParam }: { person: Person; detailParam?: s
   const [voiceText, setVoiceText] = useState("");
   const [voiceSection, setVoiceSection] = useState<DetailKey>("whatMatters");
   const [summaryDialog, setSummaryDialog] = useState(false);
+
+  const isFamily = state.role === "family";
+  const me = currentAuthor(state.role, state.caregiverName);
 
   const update = (fn: (p: Person) => Person) =>
     setState((s) => ({ ...s, people: s.people.map((p) => (p.id === person.id ? fn(p) : p)) }));
@@ -388,7 +423,6 @@ function PersonDetail({ person, detailParam }: { person: Person; detailParam?: s
   const patchDetail = (key: DetailKey, id: string, patch: Partial<Detail>) =>
     update((p) => ({ ...p, [key]: p[key].map((x) => (x.id === id ? { ...x, ...patch } : x)) }));
 
-  const moments = state.moments.filter((m) => m.personId === person.id);
   const archived = DETAIL_SECTIONS.flatMap((k) =>
     person[k].filter((d) => d.archived).map((d) => ({ key: k, detail: d })),
   );
@@ -465,11 +499,37 @@ function PersonDetail({ person, detailParam }: { person: Person; detailParam?: s
     setVoiceText(""); setVoiceChoice(null); setVoiceDialog(false);
   };
 
+  /** Turns a confirmed conversation entry into profile information, keeping its history. */
+  const addEntryToProfile = (entry: ConversationEntry) => {
+    const detail: Detail = {
+      id: uid(),
+      text: entry.message,
+      source: "Care Circle member",
+      sourceName: entry.author,
+      status: "Current",
+      dateAdded: today(),
+      lastConfirmed: today(),
+      confirmedBy: me.author,
+      history: [
+        { date: entry.createdAt, text: `Shared in the Shared Care Conversation by ${entry.author} (${entry.authorRole})` },
+        ...entry.replies.map((reply) => ({ date: reply.createdAt, text: `${reply.author}: ${reply.text}` })),
+      ],
+    };
+    saveDetail("whatMatters", detail);
+    setSection("What matters");
+  };
+
+  const tabLabels = PROFILE_SECTIONS.map((value) =>
+    value === "What matters" ? `What matters to ${firstName}` : value,
+  );
+
   return (
     <div className="space-y-8">
-      <Link to="/care-circle" search={{ tab: "People I Care For" }} className="text-base underline underline-offset-4">
-        ← Back to My Care Circle
-      </Link>
+      {backLink ?? (
+        <Link to="/care-circle" search={{ tab: "People I Care For" }} className="text-base underline underline-offset-4">
+          ← Back to My Care Circle
+        </Link>
+      )}
 
       <div className="flex flex-wrap items-center gap-4">
         <Avatar name={person.name} photo={person.photo} size={72} />
@@ -483,21 +543,250 @@ function PersonDetail({ person, detailParam }: { person: Person; detailParam?: s
       </div>
 
       <p className="text-base text-muted-foreground">
-        A private place to remember what helps {person.name.split(" ")[0]} feel understood — and to
-        notice when something may have changed.
+        {isFamily
+          ? `A shared place to remember what helps ${firstName} feel understood — and to notice when something may have changed.`
+          : `You only see information the family caregiver has chosen to share for this person’s care.`}
       </p>
 
-      <div className="flex flex-wrap gap-3">
-        <Button variant="connect" onClick={createHandoff}>
-          Create warm handoff
-        </Button>
-        <Button variant="support" onClick={() => { setVoiceDialog(true); setVoiceChoice(null); }}>
-          Add {firstName}’s voice
-        </Button>
-        <Button variant="quiet" onClick={() => setSummaryDialog(true)}>
-          Print care summary
-        </Button>
-      </div>
+      {extraHeader}
+
+      <Tabs
+        tabs={tabLabels}
+        active={section === "What matters" ? `What matters to ${firstName}` : section}
+        onChange={(value) => {
+          const index = tabLabels.indexOf(value);
+          const next = PROFILE_SECTIONS[index];
+          if (next) setSection(next);
+        }}
+      />
+
+      {section === "Current priorities" ? <CurrentPriorities person={person} /> : null}
+
+      {section === "Shared Care Conversation" ? (
+        <SharedCareConversation person={person} onAddToProfile={addEntryToProfile} />
+      ) : null}
+
+      {section === "Care Moments" ? <CareMomentsSection person={person} /> : null}
+
+      {section === "What matters" ? (
+        <div className="space-y-8">
+          <p className="text-base text-muted-foreground">
+            The preferences, routines, and details that help {firstName} feel like herself.
+          </p>
+
+          {isFamily ? (
+            <div className="flex flex-wrap gap-3">
+              <Button variant="connect" onClick={createHandoff}>
+                Create warm handoff
+              </Button>
+              <Button variant="support" onClick={() => { setVoiceDialog(true); setVoiceChoice(null); }}>
+                Add {firstName}’s voice
+              </Button>
+              <Button variant="quiet" onClick={() => setSummaryDialog(true)}>
+                Print care summary
+              </Button>
+            </div>
+          ) : (
+            <PaidSuggestion person={person} />
+          )}
+
+          {handoff ? (
+            <Card className="bg-accent/12">
+              <SectionTitle title="Warm handoff summary" subtitle="Saved to your care circle." />
+              <pre className="whitespace-pre-wrap font-sans text-base">{handoff}</pre>
+            </Card>
+          ) : null}
+
+          {DETAIL_SECTIONS.map((key) => {
+            const items = person[key].filter(
+              (d) => !d.archived && (isFamily || d.status !== "No longer current"),
+            );
+            const title =
+              key === "whatMatters" ? `What matters to ${firstName}` : SECTION_LABELS[key];
+            return (
+              <Card key={key}>
+                <SectionTitle
+                  title={title}
+                  subtitle={SECTION_HINTS[key]}
+                  action={
+                    isFamily ? (
+                      <Button variant="support" onClick={() => setOpenForm(openForm === key ? null : key)}>
+                        Add detail
+                      </Button>
+                    ) : undefined
+                  }
+                />
+                {items.length === 0 ? (
+                  <p className="text-base text-muted-foreground">
+                    {isFamily ? `Nothing here yet. Try “${SECTION_PLACEHOLDER[key]}”` : "Nothing shared here yet."}
+                  </p>
+                ) : (
+                  <ul className="space-y-3">
+                    {items.map((d) =>
+                      editing === d.id && isFamily ? (
+                        <li key={d.id}>
+                          <DetailForm
+                            person={person}
+                            initial={d}
+                            onCancel={() => setEditing(null)}
+                            onSave={(nd) => saveDetail(key, nd)}
+                          />
+                        </li>
+                      ) : isFamily ? (
+                        <DetailCard
+                          key={d.id}
+                          detail={d}
+                          person={person}
+                          caregiverName={state.caregiverName}
+                          onEdit={() => setEditing(d.id)}
+                          onConfirm={() =>
+                            patchDetail(key, d.id, {
+                              lastConfirmed: today(),
+                              confirmedBy: state.caregiverName,
+                              status: "Current",
+                            })
+                          }
+                          onArchive={() => patchDetail(key, d.id, { archived: true })}
+                        />
+                      ) : (
+                        <ReadOnlyDetail key={d.id} detail={d} person={person} caregiverName={state.caregiverName} />
+                      ),
+                    )}
+                  </ul>
+                )}
+                {openForm === key && isFamily ? (
+                  <DetailForm
+                    person={person}
+                    onCancel={() => setOpenForm(null)}
+                    onSave={(d) => saveDetail(key, d)}
+                  />
+                ) : null}
+              </Card>
+            );
+          })}
+
+          {person.voiceEntries.length ? (
+            <Card>
+              <SectionTitle title={`${firstName}’s own words`} subtitle={`Shared directly by ${person.preferredName || firstName}.`} />
+              <ul className="space-y-3">
+                {person.voiceEntries.map((entry) => (
+                  <li key={entry.id} className="rounded-2xl border border-border bg-secondary/15 p-4">
+                    <Tag tone="sage">Shared directly by {person.preferredName || firstName}</Tag>
+                    <p className="mt-2 text-sm text-muted-foreground">{entry.label} · {entry.date}</p>
+                    <p className="mt-1 text-base">{entry.text}</p>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          ) : null}
+
+          <Card>
+            <SectionTitle title="Important updates" subtitle="What has changed lately." />
+            {person.updates.length === 0 ? (
+              <p className="text-base text-muted-foreground">No updates yet.</p>
+            ) : (
+              <ul className="space-y-2">
+                {person.updates.map((u) => (
+                  <li key={u.id} className="rounded-2xl bg-muted/60 px-4 py-3">
+                    <p className="text-sm text-muted-foreground">{u.date}</p>
+                    <p className="text-base">{u.text}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {isFamily ? (
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <Input
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  placeholder="Slept well two nights in a row."
+                  aria-label="Add an important update"
+                />
+                <Button
+                  variant="support"
+                  onClick={() => {
+                    if (!draft.trim()) return;
+                    update((p) => ({
+                      ...p,
+                      updates: [{ id: uid(), date: today(), text: draft.trim() }, ...p.updates],
+                    }));
+                    setDraft("");
+                  }}
+                >
+                  Add
+                </Button>
+              </div>
+            ) : null}
+            <div className="mt-6 border-t border-border pt-4">
+              <p className="text-base font-medium text-foreground">
+                Care Circle updates about {person.preferredName || person.name}
+              </p>
+              {state.updates.filter((u) => u.personId === person.id).length === 0 ? (
+                <p className="mt-2 text-base text-muted-foreground">
+                  No Care Circle updates about them yet.
+                </p>
+              ) : (
+                <ul className="mt-3 space-y-2">
+                  {state.updates
+                    .filter((u) => u.personId === person.id)
+                    .map((u) => (
+                      <li key={u.id} className="rounded-2xl bg-muted/60 px-4 py-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Tag tone="sage">About {person.preferredName || person.name}</Tag>
+                          <span className="text-sm text-muted-foreground">
+                            {u.from} · {u.date}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-base">{u.text}</p>
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
+          </Card>
+
+          {isFamily ? (
+            <Card>
+              <SectionTitle
+                title="Archived details"
+                subtitle="Kept quietly, out of the active profile."
+                action={
+                  <Button variant="quiet" onClick={() => setShowArchived((v) => !v)}>
+                    {showArchived ? "Hide" : `Show (${archived.length})`}
+                  </Button>
+                }
+              />
+              {showArchived ? (
+                archived.length === 0 ? (
+                  <p className="text-base text-muted-foreground">Nothing archived yet.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {archived.map(({ key, detail }) => (
+                      <li key={detail.id} className="rounded-2xl border border-border bg-muted/40 p-4">
+                        <p className="text-sm text-muted-foreground">{SECTION_LABELS[key]}</p>
+                        <p className="mt-1 text-base">{detail.text}</p>
+                        <Button
+                          variant="ghost"
+                          className="mt-2 px-3 py-2 text-sm"
+                          onClick={() =>
+                            patchDetail(key, detail.id, {
+                              archived: false,
+                              lastConfirmed: today(),
+                              confirmedBy: state.caregiverName,
+                            })
+                          }
+                        >
+                          Bring this back
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )
+              ) : null}
+            </Card>
+          ) : null}
+        </div>
+      ) : null}
 
       {summaryDialog ? (
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-primary/35 p-0 sm:items-center sm:p-5" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setSummaryDialog(false); }}>
@@ -535,210 +824,101 @@ function PersonDetail({ person, detailParam }: { person: Person; detailParam?: s
           </div>
         </div>
       ) : null}
-
-      {handoff ? (
-        <Card className="bg-accent/12">
-          <SectionTitle title="Warm handoff summary" subtitle="Saved to your care circle." />
-          <pre className="whitespace-pre-wrap font-sans text-base">{handoff}</pre>
-        </Card>
-      ) : null}
-
-      <CurrentPriorities person={person} />
-
-      {DETAIL_SECTIONS.map((key) => {
-        const items = person[key].filter((d) => !d.archived);
-        const title =
-          key === "whatMatters"
-            ? `What matters to ${person.name.split(" ")[0]}`
-            : SECTION_LABELS[key];
-        return (
-          <Card key={key}>
-            <SectionTitle
-              title={title}
-              subtitle={SECTION_HINTS[key]}
-              action={
-                <Button variant="support" onClick={() => setOpenForm(openForm === key ? null : key)}>
-                  Add detail
-                </Button>
-              }
-            />
-            {items.length === 0 ? (
-              <p className="text-base text-muted-foreground">
-                Nothing here yet. Try “{SECTION_PLACEHOLDER[key]}”
-              </p>
-            ) : (
-              <ul className="space-y-3">
-                {items.map((d) =>
-                  editing === d.id ? (
-                    <li key={d.id}>
-                      <DetailForm
-                        person={person}
-                        initial={d}
-                        onCancel={() => setEditing(null)}
-                        onSave={(nd) => saveDetail(key, nd)}
-                      />
-                    </li>
-                  ) : (
-                    <DetailCard
-                      key={d.id}
-                      detail={d}
-                      person={person}
-                      caregiverName={state.caregiverName}
-                      onEdit={() => setEditing(d.id)}
-                      onConfirm={() =>
-                        patchDetail(key, d.id, {
-                          lastConfirmed: today(),
-                          confirmedBy: state.caregiverName,
-                          status: "Current",
-                        })
-                      }
-                      onArchive={() => patchDetail(key, d.id, { archived: true })}
-                    />
-                  ),
-                )}
-              </ul>
-            )}
-            {openForm === key ? (
-              <DetailForm
-                person={person}
-                onCancel={() => setOpenForm(null)}
-                onSave={(d) => saveDetail(key, d)}
-              />
-            ) : null}
-          </Card>
-        );
-      })}
-
-      <Card>
-        <SectionTitle title="Important updates" subtitle="What has changed lately." />
-        {person.updates.length === 0 ? (
-          <p className="text-base text-muted-foreground">No updates yet.</p>
-        ) : (
-          <ul className="space-y-2">
-            {person.updates.map((u) => (
-              <li key={u.id} className="rounded-2xl bg-muted/60 px-4 py-3">
-                <p className="text-sm text-muted-foreground">{u.date}</p>
-                <p className="text-base">{u.text}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-          <Input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Slept well two nights in a row."
-            aria-label="Add an important update"
-          />
-          <Button
-            variant="support"
-            onClick={() => {
-              if (!draft.trim()) return;
-              update((p) => ({
-                ...p,
-                updates: [{ id: uid(), date: today(), text: draft.trim() }, ...p.updates],
-              }));
-              setDraft("");
-            }}
-          >
-            Add
-          </Button>
-        </div>
-        <div className="mt-6 border-t border-border pt-4">
-          <p className="text-base font-medium text-foreground">
-            Care Circle updates about {person.preferredName || person.name}
-          </p>
-          {state.updates.filter((u) => u.personId === person.id).length === 0 ? (
-            <p className="mt-2 text-base text-muted-foreground">
-              No Care Circle updates about them yet.
-            </p>
-          ) : (
-            <ul className="mt-3 space-y-2">
-              {state.updates
-                .filter((u) => u.personId === person.id)
-                .map((u) => (
-                  <li key={u.id} className="rounded-2xl bg-muted/60 px-4 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Tag tone="sage">About {person.preferredName || person.name}</Tag>
-                      <span className="text-sm text-muted-foreground">
-                        {u.from} · {u.date}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-base">{u.text}</p>
-                  </li>
-                ))}
-            </ul>
-          )}
-        </div>
-      </Card>
-
-      <Card>
-        <SectionTitle title="Care moments" subtitle="Connection is care." />
-        {moments.length === 0 ? (
-          <Empty
-            title="No moments yet"
-            body="Add a song, a story, or a memory you share with them."
-            action={
-              <Link to="/moments">
-                <Button variant="connect">Go to Care Moments</Button>
-              </Link>
-            }
-          />
-        ) : (
-          <ul className="space-y-3">
-            {moments.map((m) => (
-              <li key={m.id} className="rounded-2xl border border-border p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Tag tone="warm">{m.kind}</Tag>
-                  {m.fromPerson ? <Tag tone="sage">Shared directly by {firstName}</Tag> : null}
-                </div>
-                <p className="mt-2 font-display text-xl">{m.title}</p>
-                <p className="text-base text-muted-foreground">{m.body}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-
-      <Card>
-        <SectionTitle
-          title="Archived details"
-          subtitle="Kept quietly, out of the active profile."
-          action={
-            <Button variant="quiet" onClick={() => setShowArchived((v) => !v)}>
-              {showArchived ? "Hide" : `Show (${archived.length})`}
-            </Button>
-          }
-        />
-        {showArchived ? (
-          archived.length === 0 ? (
-            <p className="text-base text-muted-foreground">Nothing archived yet.</p>
-          ) : (
-            <ul className="space-y-3">
-              {archived.map(({ key, detail }) => (
-                <li key={detail.id} className="rounded-2xl border border-border bg-muted/40 p-4">
-                  <p className="text-sm text-muted-foreground">{SECTION_LABELS[key]}</p>
-                  <p className="mt-1 text-base">{detail.text}</p>
-                  <Button
-                    variant="ghost"
-                    className="mt-2 px-3 py-2 text-sm"
-                    onClick={() =>
-                      patchDetail(key, detail.id, {
-                        archived: false,
-                        lastConfirmed: today(),
-                        confirmedBy: state.caregiverName,
-                      })
-                    }
-                  >
-                    Bring this back
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )
-        ) : null}
-      </Card>
     </div>
+  );
+}
+
+function ReadOnlyDetail({
+  detail,
+  person,
+  caregiverName,
+}: {
+  detail: Detail;
+  person: Person;
+  caregiverName: string;
+}) {
+  return (
+    <li className="rounded-2xl border border-border bg-card p-4">
+      <p className="text-base text-foreground">{detail.text}</p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Tag tone={detail.source === "Direct guest response" || detail.source === "Completed together" ? "sage" : "muted"}>
+          {sourceLabel(detail, person, caregiverName)}
+        </Tag>
+        <Tag>{detail.status}</Tag>
+      </div>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Added {detail.dateAdded} · {lastConfirmedPhrase(detail)}
+        {detail.confirmedBy ? ` · Confirmed by ${detail.confirmedBy}` : ""}
+      </p>
+    </li>
+  );
+}
+
+/** Lets a paid caregiver add an observation or suggest a change without overwriting the profile. */
+function PaidSuggestion({ person }: { person: Person }) {
+  const { state, setState } = useStore();
+  const [open, setOpen] = useState<"Observation" | "Possible change to confirm" | null>(null);
+  const [text, setText] = useState("");
+  const [sent, setSent] = useState(false);
+  const firstName = person.name.split(" ")[0] || person.preferredName || person.name;
+  const me = currentAuthor(state.role, state.caregiverName);
+
+  const send = () => {
+    if (!open || !text.trim()) return;
+    setState((s) => ({
+      ...s,
+      conversations: [
+        {
+          id: uid(),
+          personId: person.id,
+          type: open,
+          message: text.trim(),
+          author: me.author,
+          authorRole: me.authorRole,
+          createdAt: today(),
+          visibleTo: "Jordan (Family caregiver), Alicia Boateng (Paid caregiver)",
+          status: "Open" as const,
+          replies: [],
+        },
+        ...(s.conversations ?? []),
+      ],
+    }));
+    setText("");
+    setOpen(null);
+    setSent(true);
+  };
+
+  return (
+    <Card className="bg-muted/40">
+      <p className="text-base">
+        You can share what you notice without changing a confirmed preference. Jordan reviews and
+        confirms every change.
+      </p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button variant="support" className="px-4 py-2 text-sm" onClick={() => { setOpen("Observation"); setSent(false); }}>
+          Add an observation
+        </Button>
+        <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => { setOpen("Possible change to confirm"); setSent(false); }}>
+          Suggest an update
+        </Button>
+      </div>
+      {open ? (
+        <div className="mt-4 space-y-3">
+          <Field label={open === "Observation" ? `What did you notice about ${firstName}?` : "What would you suggest updating?"}>
+            <Textarea value={text} onChange={(event) => setText(event.target.value)} />
+          </Field>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setOpen(null)}>Cancel</Button>
+            <Button className="px-4 py-2 text-sm" disabled={!text.trim()} onClick={send}>Send to the Shared Care Conversation</Button>
+          </div>
+        </div>
+      ) : null}
+      {sent ? (
+        <p className="mt-3 text-sm text-secondary-foreground">
+          Shared in the Shared Care Conversation for Jordan to review.
+        </p>
+      ) : null}
+    </Card>
   );
 }
 
@@ -746,9 +926,22 @@ function CurrentPriorities({ person }: { person: Person }) {
   const { state, setState } = useStore();
   const [text, setText] = useState("");
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [noteFor, setNoteFor] = useState<string | null>(null);
+  const [noteType, setNoteType] = useState<"Observation" | "Possible change to confirm">("Observation");
+  const [noteText, setNoteText] = useState("");
   const firstName = person.preferredName || person.name.split(" ")[0] || person.name;
+  const isFamily = state.role === "family";
+  const me = currentAuthor(state.role, state.caregiverName);
 
-  const active = state.carePriorities.filter((p) => p.personId === person.id && !p.done).slice(0, 4);
+  const active = state.carePriorities.filter(
+    (p) =>
+      p.personId === person.id &&
+      !p.done &&
+      !p.archived &&
+      (isFamily || (p.visibleTo ?? "").includes("Alicia")),
+  );
   const openTasks = state.tasks.filter((t) => t.personId === person.id && !t.done);
 
   const patch = (id: string, p: Partial<(typeof state.carePriorities)[number]>) =>
@@ -762,12 +955,47 @@ function CurrentPriorities({ person }: { person: Person }) {
     setState((s) => ({
       ...s,
       carePriorities: [
-        { id: uid(), personId: person.id, text: text.trim(), done: false, createdAt: today() },
+        {
+          id: uid(),
+          personId: person.id,
+          text: text.trim(),
+          done: false,
+          createdAt: today(),
+          addedBy: s.caregiverName,
+          addedByRole: "Family caregiver",
+          visibleTo: "Jordan, Alicia Boateng",
+          status: "Active" as const,
+        },
         ...s.carePriorities,
       ],
     }));
     setText("");
     setAdding(false);
+  };
+
+  const sendNote = (priorityId: string) => {
+    if (!noteText.trim()) return;
+    setState((s) => ({
+      ...s,
+      conversations: [
+        {
+          id: uid(),
+          personId: person.id,
+          type: noteType,
+          message: noteText.trim(),
+          author: me.author,
+          authorRole: me.authorRole,
+          createdAt: today(),
+          relatedPriorityId: priorityId,
+          visibleTo: "Jordan (Family caregiver), Alicia Boateng (Paid caregiver)",
+          status: "Open" as const,
+          replies: [],
+        },
+        ...(s.conversations ?? []),
+      ],
+    }));
+    setNoteText("");
+    setNoteFor(null);
   };
 
   /** Creates a task on the caregiver's plate from a priority, then links the two. */
@@ -795,54 +1023,131 @@ function CurrentPriorities({ person }: { person: Person }) {
     <Card>
       <SectionTitle
         title="Current priorities"
-        subtitle={`What currently needs attention for ${firstName}.`}
+        subtitle="What the care team is focusing on right now."
       />
       {active.length === 0 ? (
-        <Empty title="Nothing pressing right now" body="Add a priority when something needs attention." />
+        <Empty title="Nothing pressing right now" body={`Add a priority when something needs attention for ${firstName}.`} />
       ) : (
         <ul className="space-y-3">
           {active.map((p) => {
             const task = state.tasks.find((t) => t.id === p.taskId);
             return (
               <li key={p.id} className="rounded-2xl border border-border p-4">
-                <p className="text-lg">{p.text}</p>
+                {editingId === p.id && isFamily ? (
+                  <div className="space-y-3">
+                    <Input value={editText} onChange={(e) => setEditText(e.target.value)} aria-label="Edit priority" />
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setEditingId(null)}>Cancel</Button>
+                      <Button
+                        className="px-4 py-2 text-sm"
+                        disabled={!editText.trim()}
+                        onClick={() => {
+                          patch(p.id, { text: editText.trim() });
+                          setEditingId(null);
+                        }}
+                      >
+                        Save priority
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-lg">{p.text}</p>
+                )}
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {task ? <Tag tone="sage">On my plate · {task.bucket}</Tag> : null}
-                  {p.reviewDate ? <Tag>Review {p.reviewDate}</Tag> : null}
+                  <Tag tone="sage">{p.status ?? "Active"}</Tag>
+                  {task ? <Tag>On my plate · {task.bucket}</Tag> : null}
                 </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Added by {p.addedBy ?? state.caregiverName}
+                  {p.addedByRole ? ` · ${p.addedByRole}` : ""} · {p.createdAt}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Visible to {p.visibleTo ?? "Jordan"}
+                  {p.reviewDate ? ` · Follow up on ${p.reviewDate}` : ""}
+                </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button variant="support" className="px-4 py-2 text-sm" onClick={() => patch(p.id, { done: true })}>
+                  <Button variant="support" className="px-4 py-2 text-sm" onClick={() => patch(p.id, { done: true, status: "Complete" })}>
                     Mark complete
                   </Button>
-                  {task ? (
-                    <Link to="/check-in" search={{ section: "capacity" }}>
-                      <Button variant="quiet" className="px-4 py-2 text-sm">Open in My Check-In</Button>
-                    </Link>
+                  {isFamily ? (
+                    <>
+                      <Button
+                        variant="quiet"
+                        className="px-4 py-2 text-sm"
+                        onClick={() => {
+                          setEditingId(p.id);
+                          setEditText(p.text);
+                        }}
+                      >
+                        Edit priority
+                      </Button>
+                      <Button variant="ghost" className="px-4 py-2 text-sm" onClick={() => patch(p.id, { archived: true, status: "Archived" })}>
+                        Archive
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="px-4 py-2 text-sm"
+                        onClick={() => patch(p.id, { reviewDate: addDays(7) })}
+                      >
+                        Set a follow-up date
+                      </Button>
+                      {task ? (
+                        <Link to="/check-in" search={{ section: "capacity" }}>
+                          <Button variant="quiet" className="px-4 py-2 text-sm">Open in My Check-In</Button>
+                        </Link>
+                      ) : (
+                        <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => makeTask(p.id, p.text)}>
+                          Create a task from this
+                        </Button>
+                      )}
+                      {task ? (
+                        <Link to="/check-in" search={{ section: "delegate", delegate: task.id }}>
+                          <Button variant="quiet" className="px-4 py-2 text-sm">Turn into a Care Circle request</Button>
+                        </Link>
+                      ) : null}
+                    </>
                   ) : (
-                    <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => makeTask(p.id, p.text)}>
-                      Create a task from this
-                    </Button>
+                    <>
+                      <Button
+                        variant="quiet"
+                        className="px-4 py-2 text-sm"
+                        onClick={() => { setNoteFor(p.id); setNoteType("Observation"); setNoteText(""); }}
+                      >
+                        Add an observation
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="px-4 py-2 text-sm"
+                        onClick={() => { setNoteFor(p.id); setNoteType("Possible change to confirm"); setNoteText(""); }}
+                      >
+                        Suggest an update
+                      </Button>
+                    </>
                   )}
-                  {task ? (
-                    <Link to="/check-in" search={{ section: "delegate", delegate: task.id }}>
-                      <Button variant="quiet" className="px-4 py-2 text-sm">Turn into a Care Circle request</Button>
-                    </Link>
-                  ) : null}
-                  <Button
-                    variant="ghost"
-                    className="px-4 py-2 text-sm"
-                    onClick={() => patch(p.id, { reviewDate: addDays(7) })}
-                  >
-                    Check back in a week
-                  </Button>
                 </div>
+                {noteFor === p.id ? (
+                  <div className="mt-3 space-y-3 rounded-2xl bg-muted/40 p-4">
+                    <p className="text-sm text-muted-foreground">
+                      This is shared with Jordan for review. It does not change her confirmed priority.
+                    </p>
+                    <Field label={noteType === "Observation" ? "What did you notice?" : "What would you suggest?"}>
+                      <Textarea value={noteText} onChange={(e) => setNoteText(e.target.value)} />
+                    </Field>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setNoteFor(null)}>Cancel</Button>
+                      <Button className="px-4 py-2 text-sm" disabled={!noteText.trim()} onClick={() => sendNote(p.id)}>
+                        Share with the care team
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
               </li>
             );
           })}
         </ul>
       )}
 
-      {openTasks.length ? (
+      {openTasks.length && isFamily ? (
         <div className="mt-5 border-t border-border pt-4">
           <p className="text-base font-medium">Open tasks connected to {firstName}</p>
           <ul className="mt-2 space-y-1">
@@ -855,19 +1160,21 @@ function CurrentPriorities({ person }: { person: Person }) {
         </div>
       ) : null}
 
-      {adding ? (
-        <div className="mt-5 space-y-3">
-          <Field label="What needs attention?">
-            <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Groceries before the weekend" />
-          </Field>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="quiet" onClick={() => setAdding(false)}>Cancel</Button>
-            <Button disabled={!text.trim()} onClick={addPriority}>Save priority</Button>
+      {isFamily ? (
+        adding ? (
+          <div className="mt-5 space-y-3">
+            <Field label="What needs attention?">
+              <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Groceries before the weekend" />
+            </Field>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="quiet" onClick={() => setAdding(false)}>Cancel</Button>
+              <Button disabled={!text.trim()} onClick={addPriority}>Save priority</Button>
+            </div>
           </div>
-        </div>
-      ) : (
-        <Button className="mt-5" onClick={() => setAdding(true)}>Add a priority</Button>
-      )}
+        ) : (
+          <Button className="mt-5" onClick={() => setAdding(true)}>Add a priority</Button>
+        )
+      ) : null}
     </Card>
   );
 }

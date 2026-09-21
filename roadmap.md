@@ -37,3 +37,10 @@
 - [ ] Redirect legacy paid routes to the matching Care Team tab
 - [ ] Preserve permissions for Care Moments and private check-ins
 - [ ] Verify paid flow, family regression, persistence, responsive layout, and build
+
+## Shared person profile (done)
+- [x] Ruth's single shared profile with Current priorities / What matters / Shared Care Conversation / Care Moments
+- [x] Same profile opens from My Care Circle and paid Care Team, role-based permissions
+- [x] Care Moments moved inside the profile; removed from both sidebars; /moments redirects
+- [x] Handoff notes can be linked into the Shared Care Conversation
+- [x] Care Connect drafts reviewed by AI to remove identifying details
