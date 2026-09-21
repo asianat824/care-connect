@@ -204,8 +204,8 @@ export function PaidHome() {
         {sent ? (
           <p className="mt-4 rounded-2xl bg-secondary/30 px-4 py-3 text-base text-secondary-foreground">
             Handoff sent to Jordan.{" "}
-            <Link to="/handoff-notes" className="underline underline-offset-4">
-              View in Handoff Notes
+            <Link to="/care-team" search={{ tab: "Handoff Notes" }} className="underline underline-offset-4">
+              View in Care Team
             </Link>
           </p>
         ) : null}
@@ -230,7 +230,7 @@ export function PaidHome() {
         <SectionTitle
           title="Recent handoffs you've sent"
           action={
-            <Link to="/handoff-notes" className="text-base underline underline-offset-4">
+            <Link to="/care-team" search={{ tab: "Handoff Notes" }} className="text-base underline underline-offset-4">
               All notes
             </Link>
           }
