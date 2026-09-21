@@ -165,7 +165,11 @@ function FamilyCheckInPage() {
     setState((s) => ({
       ...s,
       tasks: s.tasks.some((t) => t.id === base.id)
-        ? s.tasks.map((t) => (t.id === base.id ? { ...base, bucket: t.bucket, done: t.done } : t))
+        ? s.tasks.map((t) =>
+            t.id === base.id
+              ? { ...base, bucket: t.bucket, done: t.done, ...(t.status ? { status: t.status } : {}) }
+              : t,
+          )
         : [base, ...s.tasks],
     }));
     resetTaskForm();
@@ -475,28 +479,31 @@ function FamilyCheckInPage() {
               </Field>
               <fieldset>
                 <legend className="text-base font-medium">Is this personal or caregiving?</legend>
+                <p className="mt-0.5 text-sm text-muted-foreground">Choose one to save this item.</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {(["Caregiving", "Personal"] as TaskKind[]).map((k) => (
+                  {(["Personal", "Caregiving"] as TaskKind[]).map((k) => (
                     <Chip key={k} selected={taskForm.kind === k} onClick={() => setTaskForm({ ...taskForm, kind: k })}>
                       {k}
                     </Chip>
                   ))}
                 </div>
               </fieldset>
-              <Field label="Who is this connected to?" hint="Optional.">
-                <select
-                  value={taskForm.personId}
-                  onChange={(e) => setTaskForm({ ...taskForm, personId: e.target.value })}
-                  className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-base text-foreground"
-                >
-                  <option value="">No one in particular</option>
-                  {state.people.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.preferredName || p.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+              {taskForm.kind === "Caregiving" ? (
+                <Field label="Who is this task about?" hint="Optional.">
+                  <select
+                    value={taskForm.personId}
+                    onChange={(e) => setTaskForm({ ...taskForm, personId: e.target.value })}
+                    className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-base text-foreground"
+                  >
+                    <option value="">No one in particular</option>
+                    {state.people.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.preferredName || p.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              ) : null}
               <Field label="Due date" hint="Optional.">
                 <Input type="date" value={taskForm.due} onChange={(e) => setTaskForm({ ...taskForm, due: e.target.value })} />
               </Field>
@@ -507,7 +514,7 @@ function FamilyCheckInPage() {
                 <Button variant="quiet" onClick={resetTaskForm}>
                   Cancel
                 </Button>
-                <Button disabled={!taskForm.title.trim()} onClick={saveTask}>
+                <Button disabled={!taskForm.title.trim() || !taskForm.kind} onClick={saveTask}>
                   Save item
                 </Button>
               </div>
