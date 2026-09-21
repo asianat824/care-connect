@@ -419,7 +419,114 @@ function FamilyCheckInPage() {
         </div>
       </Accordion>
 
-      {/* ============ 2. What is on my plate ============ */}
+      {/* ============ 2. My tasks ============ */}
+      <Accordion
+        id="tasks"
+        title="My tasks"
+        subtitle="See what you are carrying for yourself and for others."
+        open={open === "tasks"}
+        onToggle={() => toggle("tasks")}
+      >
+        <div className="space-y-4">
+          <Tabs
+            tabs={[
+              `Personal Tasks (${state.tasks.filter((t) => t.kind === "Personal").length})`,
+              `Caregiving Tasks (${state.tasks.filter((t) => t.kind === "Caregiving").length})`,
+            ]}
+            active={
+              taskTab === "Personal"
+                ? `Personal Tasks (${state.tasks.filter((t) => t.kind === "Personal").length})`
+                : `Caregiving Tasks (${state.tasks.filter((t) => t.kind === "Caregiving").length})`
+            }
+            onChange={(next) => setTaskTab(next.startsWith("Personal") ? "Personal" : "Caregiving")}
+          />
+          <p className="text-sm text-muted-foreground">
+            {taskTab === "Personal"
+              ? "Personal tasks stay private. They are never shared with your Care Circle."
+              : "A caregiving task is shared only when you choose to send it as a request."}
+          </p>
+          <ul className="space-y-3">
+            {state.tasks
+              .filter((t) => t.kind === taskTab)
+              .map((t) => {
+                const status = t.done ? "Complete" : (t.status ?? "To do");
+                const options: TaskStatus[] =
+                  taskTab === "Personal"
+                    ? ["To do", "In progress", "Complete"]
+                    : ["To do", "Delegated", "Complete"];
+                return (
+                  <li key={t.id} className="rounded-2xl border border-border p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Tag tone={t.kind === "Personal" ? "sage" : "warm"}>{t.kind}</Tag>
+                      {t.personId ? <Tag>{personName(t.personId)}</Tag> : null}
+                      <Tag tone={status === "Complete" ? "sage" : "muted"}>{status}</Tag>
+                    </div>
+                    <p className={`mt-2 text-lg ${t.done ? "line-through opacity-70" : ""}`}>{t.title}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {options
+                        .filter((option) => option !== status)
+                        .map((option) => (
+                          <Chip
+                            key={option}
+                            onClick={() =>
+                              patchTask(t.id, { status: option, done: option === "Complete" })
+                            }
+                            className="px-3 py-1.5 text-sm"
+                          >
+                            {option === "Complete" ? "Mark complete" : `Move to “${option}”`}
+                          </Chip>
+                        ))}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Button
+                        variant="ghost"
+                        className="px-3 py-2 text-sm"
+                        onClick={() => {
+                          setTaskForm({
+                            id: t.id,
+                            title: t.title,
+                            kind: t.kind,
+                            personId: t.personId ?? "",
+                            due: t.due ?? "",
+                            notes: t.notes ?? "",
+                          });
+                          setShowTaskForm(true);
+                          setOpen("plate");
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button variant="ghost" className="px-3 py-2 text-sm" onClick={() => removeTask(t.id)}>
+                        Delete
+                      </Button>
+                      {taskTab === "Caregiving" ? (
+                        <Button
+                          variant="quiet"
+                          className="px-3 py-2 text-sm"
+                          onClick={() => {
+                            setBucket(t, "I may need help");
+                            setPicked([t.id]);
+                            setDelegateAction("circle");
+                            setOpen("delegate");
+                          }}
+                        >
+                          Send as a request
+                        </Button>
+                      ) : null}
+                    </div>
+                  </li>
+                );
+              })}
+            {state.tasks.filter((t) => t.kind === taskTab).length === 0 ? (
+              <li>
+                <Empty title="Nothing here yet" body="Add an item under “What is on my plate?”" />
+              </li>
+            ) : null}
+          </ul>
+        </div>
+      </Accordion>
+
+      {/* ============ 3. What is on my plate ============ */}
       <Accordion
         id="plate"
         title="What is on my plate?"
