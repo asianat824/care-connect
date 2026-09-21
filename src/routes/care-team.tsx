@@ -106,10 +106,14 @@ function PeopleSupport({ personId, section }: { personId?: string; section?: Pro
   const detailsOpen = Boolean(personId);
 
   if (detailsOpen) {
+    const wantsConversation = section === "Shared Care Conversation";
+    const initialSection: ProfileSection | undefined = wantsConversation ? "Care Circle" : section;
     return (
       <PersonProfile
         person={person}
-        {...(section ? { initialSection: section } : {})}
+        conversationInCareCircle
+        {...(wantsConversation ? { conversationStartOpen: true } : {})}
+        {...(initialSection ? { initialSection } : {})}
         backLink={
           <Button
             variant="ghost"
@@ -122,7 +126,7 @@ function PeopleSupport({ personId, section }: { personId?: string; section?: Pro
         extraHeader={
           <p className="text-base text-muted-foreground">Today&rsquo;s shift · 9:00 AM–6:00 PM</p>
         }
-        careCircleContent={
+        renderCareCircle={(openConversation, conversationOpen) => (
           <div className="space-y-5">
             <SectionTitle
               title="Ruth’s care circle"
@@ -130,7 +134,10 @@ function PeopleSupport({ personId, section }: { personId?: string; section?: Pro
             />
             <div className="grid gap-4 md:grid-cols-2">
               <Card>
-                <p className="font-semibold">Jordan</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold">Jordan</p>
+                  <Tag tone="sage">Designated care contact</Tag>
+                </div>
                 <p className="text-sm text-muted-foreground">Family caregiver</p>
                 <dl className="mt-3 space-y-2 text-sm">
                   <div><dt className="font-semibold">Role</dt><dd>Primary family contact</dd></div>
@@ -139,6 +146,9 @@ function PeopleSupport({ personId, section }: { personId?: string; section?: Pro
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setContactVisible((value) => !value)}>
                     View approved contact information
+                  </Button>
+                  <Button variant="connect" className="px-4 py-2 text-sm" onClick={openConversation}>
+                    {conversationOpen ? "Close Care Conversation" : "Care Conversation"}
                   </Button>
                   <Button variant="support" className="px-4 py-2 text-sm" onClick={() => setUpdateOpen(true)}>
                     Send care update
@@ -151,6 +161,10 @@ function PeopleSupport({ personId, section }: { personId?: string; section?: Pro
                     Complete handoff
                   </Button>
                 </div>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Care updates go to everyone with approved access. A Care Conversation stays private between you and Jordan.
+                </p>
+
                 {contactVisible ? (
                   <p className="mt-3 text-sm text-foreground">Approved contact: jordan@example.com · (555) 014-1182</p>
                 ) : null}
