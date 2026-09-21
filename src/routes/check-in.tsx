@@ -678,23 +678,46 @@ function CheckInPage() {
         )}
       </Accordion>
 
-      <Card>
-        <SectionTitle title="Your check-in history" subtitle="Gentle patterns, not diagnoses." />
-        {state.checkIns.length === 0 ? (
-          <Empty title="No check-ins yet" body="Your first check-in will appear here." />
-        ) : (
-          <ul className="space-y-3">
-            {state.checkIns.slice(0, 8).map((c) => (
-              <li key={c.id} className="flex flex-wrap items-center gap-2 rounded-2xl border border-border p-4">
-                <span className="text-sm text-muted-foreground">{c.date}</span>
-                {c.mood ? <Tag>{c.mood}</Tag> : null}
-                <Tag tone="sage">Energy {c.energy}/5</Tag>
-                <Tag tone="warm">{c.capacity}</Tag>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      {historyOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Your check-in history"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 p-4 sm:items-center"
+        >
+          <Card className="max-h-[80vh] w-full max-w-xl overflow-y-auto">
+            <SectionTitle
+              title="Your check-in history"
+              subtitle="Gentle patterns, not diagnoses."
+              action={
+                <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setHistoryOpen(false)}>
+                  Close
+                </Button>
+              }
+            />
+            <p className="mb-4 text-sm text-muted-foreground">
+              Your check-in history is private and only visible to you.
+            </p>
+            {state.checkIns.length === 0 ? (
+              <Empty title="No check-ins yet" body="Your first check-in will appear here." />
+            ) : (
+              <ul className="space-y-3">
+                {state.checkIns.slice(0, 8).map((c) => (
+                  <li
+                    key={c.id}
+                    className="flex flex-wrap items-center gap-2 rounded-2xl border border-border p-4"
+                  >
+                    <span className="text-sm text-muted-foreground">{c.date}</span>
+                    {c.mood ? <Tag>{c.mood}</Tag> : null}
+                    <Tag tone="sage">Energy {c.energy}/5</Tag>
+                    <Tag tone="warm">{c.capacity}</Tag>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
+      ) : null}
     </div>
   );
 }
