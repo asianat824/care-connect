@@ -54,4 +54,4 @@
 ## Paid Ruth profile organization
 - [x] Add the paid-only Care Circle profile tab in the requested order
 - [x] Move approved Jordan, Marcus, and Denise information and actions into the tab
-- [ ] Verify paid profile behavior, family profile regression, mobile layout, and build
+- [x] Verify paid profile behavior, family profile regression, mobile layout, and build
