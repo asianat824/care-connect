@@ -626,6 +626,17 @@ function CheckInPage() {
                   />
                 </Field>
                 <Field label="Who should receive it?">
+                  <div className="mb-3">
+                    <Chip
+                      selected={allSelected}
+                      onClick={() =>
+                        setVisibleTo(allSelected ? [] : state.members.map((m) => m.id))
+                      }
+                      className="max-w-full whitespace-normal"
+                    >
+                      Select everyone
+                    </Chip>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {state.members.map((m) => (
                       <Chip
