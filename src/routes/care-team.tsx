@@ -93,7 +93,7 @@ function CareTeamPage() {
   );
 }
 
-function PeopleSupport({ personId }: { personId?: string }) {
+function PeopleSupport({ personId, section }: { personId?: string; section?: ProfileSection }) {
   const { state, setState } = useStore();
   const navigate = useNavigate();
   const person = state.people.find((item) => item.id === personId) ?? state.people[0];
@@ -104,87 +104,136 @@ function PeopleSupport({ personId }: { personId?: string }) {
   if (!person) return <Empty title="No one is assigned" body="People assigned to your care will appear here." />;
 
   const detailsOpen = Boolean(personId);
-  const sharedDetails = [...person.whatMatters, ...person.communication, ...person.comfort, ...person.routines, ...person.preferences]
-    .filter((detail) => !detail.archived && detail.status !== "No longer current");
-  const priorities = state.carePriorities.filter((priority) => priority.personId === person.id && !priority.done).slice(0, 4);
 
   if (detailsOpen) {
     return (
-      <div className="space-y-6">
-        <Button variant="ghost" className="px-0" onClick={() => navigate({ to: "/care-team", search: { tab: "People I Support" } })}>
-          ← Back to People I Support
-        </Button>
-        <Card>
-          <div className="flex items-center gap-3">
-            <Avatar name={person.name} photo={person.photo} />
-            <div><h2 className="font-display text-3xl">{person.preferredName || person.name}</h2><p className="text-muted-foreground">Today's shift · 9:00 AM–6:00 PM</p></div>
+      <PersonProfile
+        person={person}
+        {...(section ? { initialSection: section } : {})}
+        backLink={
+          <Button
+            variant="ghost"
+            className="px-0"
+            onClick={() => navigate({ to: "/care-team", search: { tab: "People I Support" } })}
+          >
+            ← Back to People I Support
+          </Button>
+        }
+        extraHeader={
+          <div className="space-y-4">
+            <Card>
+              <p className="text-base text-muted-foreground">Today&rsquo;s shift · 9:00 AM–6:00 PM</p>
+              <SectionTitle title="Family contacts" />
+              <div className="rounded-2xl border border-border p-4">
+                <p className="font-semibold">Jordan</p>
+                <p className="text-sm text-muted-foreground">Family caregiver</p>
+                <p className="mt-1 text-sm">Receives end-of-shift handoffs</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setContactVisible((value) => !value)}>
+                    View approved contact information
+                  </Button>
+                  <Button variant="support" className="px-4 py-2 text-sm" onClick={() => setUpdateOpen(true)}>
+                    Send care update
+                  </Button>
+                  <Button
+                    variant="quiet"
+                    className="px-4 py-2 text-sm"
+                    onClick={() => navigate({ to: "/care-team", search: { tab: "Handoff Notes", handoff: "new" } })}
+                  >
+                    Complete handoff
+                  </Button>
+                </div>
+                {contactVisible ? (
+                  <p className="mt-3 text-sm text-foreground">Approved contact: jordan@example.com · (555) 014-1182</p>
+                ) : null}
+                {updateOpen ? (
+                  <div className="mt-4 space-y-3">
+                    <Field label={`Care update for ${person.preferredName || person.name}`}>
+                      <Textarea value={updateText} onChange={(event) => setUpdateText(event.target.value)} placeholder="Share an approved care update" />
+                    </Field>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setUpdateOpen(false)}>Cancel</Button>
+                      <Button
+                        className="px-4 py-2 text-sm"
+                        disabled={!updateText.trim()}
+                        onClick={() => {
+                          setState((current) => ({
+                            ...current,
+                            updates: [
+                              { id: uid(), from: "Alicia Boateng", date: today(), text: updateText.trim(), personId: person.id },
+                              ...current.updates,
+                            ],
+                          }));
+                          setUpdateText("");
+                          setUpdateOpen(false);
+                          setSentUpdate(true);
+                        }}
+                      >
+                        Send update
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+                {sentUpdate ? <p className="mt-3 text-sm text-secondary-foreground">Care update sent to Jordan.</p> : null}
+              </div>
+            </Card>
+
+            <Card>
+              <SectionTitle title={`Others supporting ${person.name.split(" ")[0]}`} />
+              <ul className="space-y-3">
+                {state.members
+                  .filter((member) => ["Marcus Ellis", "Denise Park"].includes(member.name))
+                  .map((member) => (
+                    <li key={member.id} className="rounded-2xl border border-border p-4">
+                      <p className="font-semibold">{member.name}</p>
+                      <p className="text-sm text-muted-foreground">{member.role}</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Tag tone="sage">{member.helpsWith}</Tag>
+                        <Tag>{member.availability}</Tag>
+                      </div>
+                    </li>
+                  ))}
+              </ul>
+            </Card>
           </div>
-          <p className="mt-5 rounded-2xl bg-secondary/25 p-4 text-base text-foreground">
-            You only see information the family caregiver has chosen to share for this person’s care.
-          </p>
-        </Card>
-
-        <Card>
-          <SectionTitle title="Current care priority" />
-          <p className="text-lg">Preserve Ruth’s evening routine and confirm tomorrow’s appointment time</p>
-          {priorities.length ? <ul className="mt-3 space-y-2">{priorities.map((priority) => <li key={priority.id} className="rounded-2xl border border-border p-3">{priority.text}</li>)}</ul> : null}
-        </Card>
-
-        <Card>
-          <SectionTitle title="Approved preferences and communication" subtitle="Shared for respectful, connected care." />
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {sharedDetails.map((detail) => (
-              <li key={detail.id} className="rounded-2xl border border-border p-4">
-                <p>{detail.text}</p>
-                <div className="mt-2 flex flex-wrap gap-2"><Tag>{sourceLabel(detail, person, state.caregiverName)}</Tag><Tag tone="sage">{detail.status}</Tag></div>
-              </li>
-            ))}
-          </ul>
-        </Card>
-
-        <Card>
-          <SectionTitle title="Family contacts" />
-          <div className="rounded-2xl border border-border p-4">
-            <p className="font-semibold">Jordan</p><p className="text-sm text-muted-foreground">Family caregiver</p><p className="mt-1 text-sm">Receives end-of-shift handoffs</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setContactVisible((value) => !value)}>View approved contact information</Button>
-              <Button variant="support" className="px-4 py-2 text-sm" onClick={() => setUpdateOpen(true)}>Send care update</Button>
-            </div>
-            {contactVisible ? <p className="mt-3 text-sm text-foreground">Approved contact: jordan@example.com · (555) 014-1182</p> : null}
-            {updateOpen ? <div className="mt-4 space-y-3"><Field label="Care update for Mama Ruth"><Textarea value={updateText} onChange={(event) => setUpdateText(event.target.value)} placeholder="Share an approved care update" /></Field><div className="flex flex-wrap gap-2"><Button variant="quiet" className="px-4 py-2 text-sm" onClick={() => setUpdateOpen(false)}>Cancel</Button><Button className="px-4 py-2 text-sm" disabled={!updateText.trim()} onClick={() => { setState((current) => ({ ...current, updates: [{ id: uid(), from: "Alicia Boateng", date: today(), text: updateText.trim(), personId: person.id }, ...current.updates] })); setUpdateText(""); setUpdateOpen(false); setSentUpdate(true); }}>Send update</Button></div></div> : null}
-            {sentUpdate ? <p className="mt-3 text-sm text-secondary-foreground">Care update sent to Jordan.</p> : null}
-          </div>
-        </Card>
-
-        <Card>
-          <SectionTitle title="Others supporting Ruth" />
-          <ul className="space-y-3">
-            {state.members.filter((member) => ["Marcus Ellis", "Denise Park"].includes(member.name)).map((member) => (
-              <li key={member.id} className="rounded-2xl border border-border p-4">
-                <p className="font-semibold">{member.name}</p><p className="text-sm text-muted-foreground">{member.role}</p>
-                <div className="mt-2 flex flex-wrap gap-2"><Tag tone="sage">{member.helpsWith}</Tag><Tag>{member.availability}</Tag></div>
-              </li>
-            ))}
-          </ul>
-        </Card>
-        <Button onClick={() => navigate({ to: "/care-team", search: { tab: "Handoff Notes", handoff: "new" } })}>Complete handoff</Button>
-      </div>
+        }
+      />
     );
   }
+
+  const priority = state.carePriorities.find(
+    (item) => item.personId === person.id && !item.done && !item.archived && (item.visibleTo ?? "").includes("Alicia"),
+  );
 
   return (
     <Card>
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-center gap-3"><Avatar name={person.name} photo={person.photo} /><div><h2 className="font-display text-2xl">Mama Ruth</h2><p className="text-muted-foreground">Shift: 9:00 AM–6:00 PM</p></div></div>
+        <div className="flex items-center gap-3">
+          <Avatar name={person.name} photo={person.photo} />
+          <div>
+            <h2 className="font-display text-2xl">{person.preferredName || person.name}</h2>
+            <p className="text-muted-foreground">Shift: 9:00 AM–6:00 PM</p>
+          </div>
+        </div>
         <Tag tone="sage">Approved care access</Tag>
       </div>
       <dl className="mt-5 space-y-3 text-base">
-        <div><dt className="font-semibold">Current priority</dt><dd>Preserve Ruth’s evening routine and confirm tomorrow’s appointment time</dd></div>
-        <div><dt className="font-semibold">Primary family contact</dt><dd>Jordan</dd></div>
+        <div>
+          <dt className="font-semibold">Current priority</dt>
+          <dd>{priority?.text ?? "Nothing shared right now."}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold">Primary family contact</dt>
+          <dd>Jordan</dd>
+        </div>
       </dl>
       <div className="mt-5 flex flex-wrap gap-2">
-        <Button onClick={() => navigate({ to: "/care-team", search: { tab: "People I Support", person: person.id } })}>View care details</Button>
-        <Button variant="support" onClick={() => navigate({ to: "/care-team", search: { tab: "Handoff Notes", handoff: "new" } })}>Complete handoff</Button>
+        <Button onClick={() => navigate({ to: "/care-team", search: { tab: "People I Support", person: person.id } })}>
+          View care details
+        </Button>
+        <Button variant="support" onClick={() => navigate({ to: "/care-team", search: { tab: "Handoff Notes", handoff: "new" } })}>
+          Complete handoff
+        </Button>
       </div>
     </Card>
   );
