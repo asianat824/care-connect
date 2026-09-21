@@ -33,6 +33,9 @@ function MomentsPage() {
   const [body, setBody] = useState("");
   const [filterPersonId, setFilterPersonId] = useState(state.people[0]?.id ?? "");
   const prompt = CONNECTION_PROMPTS[new Date().getDate() % CONNECTION_PROMPTS.length] ?? "";
+  const paidMember = state.members.find((member) => member.name === "Alicia Boateng");
+  const canPaidContribute = paidMember?.permissions.includes("Contribute to Care Moments") ?? false;
+  const canContribute = state.role === "family" || canPaidContribute;
 
   const add = () => {
     if (!title.trim()) return;
@@ -45,7 +48,7 @@ function MomentsPage() {
           kind,
           title: title.trim(),
           body: body.trim(),
-          author: s.caregiverName,
+           author: s.role === "paid" ? "Alicia Boateng" : s.caregiverName,
           date: today(),
         },
         ...s.moments,
@@ -72,6 +75,12 @@ function MomentsPage() {
         </p>
       </header>
 
+      {state.role === "paid" ? (
+        <p className="rounded-2xl bg-secondary/25 p-4 text-base text-foreground">
+          You may contribute to Care Moments only for people whose family has given you permission.
+        </p>
+      ) : null}
+
       {state.people.length > 1 ? (
         <Field label="Whose care moments would you like to see?">
           <select
@@ -95,6 +104,7 @@ function MomentsPage() {
         <Button
           variant="connect"
           className="mt-4"
+          disabled={!canContribute}
           onClick={() => {
             setKind("Prompt answer");
             setTitle(prompt);
@@ -104,7 +114,7 @@ function MomentsPage() {
         </Button>
       </Card>
 
-      <Card className="space-y-5">
+      {canContribute ? <Card className="space-y-5">
         <SectionTitle title="Add a moment" subtitle="Photos and media use local placeholders." />
         <div className="flex flex-wrap gap-2">
           {KINDS.map((k) => (
@@ -144,7 +154,7 @@ function MomentsPage() {
           </div>
         ) : null}
         <Button onClick={add}>Save this moment</Button>
-      </Card>
+      </Card> : null}
 
       <section>
         <SectionTitle title="Memory collection" subtitle="Memories, songs, photos, stories, and activities gathered over time." />
