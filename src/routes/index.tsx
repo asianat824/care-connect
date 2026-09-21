@@ -357,6 +357,8 @@ function FamilyHome() {
         </Link>
       </Card>
 
+      <CareUpdatesSection />
+
       <CheckBackSection />
 
       <Card>
