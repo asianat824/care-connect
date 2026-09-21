@@ -252,8 +252,8 @@ function CareCirclePage() {
                 <Card key={r.id} className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <Tag tone="warm">{r.type}</Tag>
-                    <Tag>Status: {r.status}</Tag>
-                    {r.status === "Accepted" && r.acceptedBy ? <Tag tone="sage">Accepted by {r.acceptedBy}</Tag> : null}
+                    <Tag>Status: {overallStatus(r)}</Tag>
+                    {assignedTo(r) ? <Tag tone="sage">Assigned to {assignedTo(r)}</Tag> : null}
                     {person ? <Tag>For {person.preferredName || person.name}</Tag> : null}
                   </div>
                   <p className="text-lg">{r.detail}</p>
