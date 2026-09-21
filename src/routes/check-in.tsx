@@ -636,7 +636,7 @@ function FamilyCheckInPage() {
         </div>
       </Accordion>
 
-      {/* ============ 3. Capacity sorting ============ */}
+      {/* ============ 4. Capacity sorting ============ */}
       <Accordion
         id="capacity"
         title="What is within my capacity?"
