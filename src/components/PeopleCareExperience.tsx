@@ -382,6 +382,9 @@ export function PersonProfile({
   backLink,
   extraHeader,
   careCircleContent,
+  renderCareCircle,
+  conversationInCareCircle,
+  conversationStartOpen,
 }: {
   person: Person;
   detailParam?: string;
@@ -389,12 +392,20 @@ export function PersonProfile({
   backLink?: ReactNode;
   extraHeader?: ReactNode;
   careCircleContent?: ReactNode;
+  /** Lets the host render the Care Circle with a control that opens the private care conversation. */
+  renderCareCircle?: (openConversation: () => void, conversationOpen: boolean) => ReactNode;
+  /** When true, the conversation lives inside Care Circle instead of its own tab. */
+  conversationInCareCircle?: boolean;
+  conversationStartOpen?: boolean;
 }) {
   const { state, setState } = useStore();
   const navigate = useNavigate();
+  const hasCareCircle = Boolean(careCircleContent || renderCareCircle);
+  const [conversationOpen, setConversationOpen] = useState(Boolean(conversationStartOpen));
   const [section, setSection] = useState<ProfileSection>(
-    initialSection === "Care Circle" && !careCircleContent ? "Current priorities" : initialSection ?? "Current priorities",
+    initialSection === "Care Circle" && !hasCareCircle ? "Current priorities" : initialSection ?? "Current priorities",
   );
+
   const [openForm, setOpenForm] = useState<DetailKey | null>(null);
   const [editing, setEditing] = useState<string | null>(detailParam ?? null);
   const [draft, setDraft] = useState("");
