@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Accordion, Button, Card, Chip, Empty, Field, Input, SectionTitle, Tag, Textarea } from "@/components/ui";
+import { Accordion, Button, Card, Chip, Empty, Field, Input, SectionTitle, Tabs, Tag, Textarea } from "@/components/ui";
 import { useStore } from "@/lib/store";
 import { SUPPORT_TYPES, today, uid } from "@/lib/demo-data";
-import type { Capacity, CapacityBucket, Task, TaskKind } from "@/lib/types";
+import type { Capacity, CapacityBucket, Task, TaskKind, TaskStatus } from "@/lib/types";
 
 export const Route = createFileRoute("/check-in")({
   validateSearch: (search: Record<string, unknown>) => {
