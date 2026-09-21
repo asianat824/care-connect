@@ -100,11 +100,33 @@ export interface Member {
 export type RequestStatus =
   | "Draft"
   | "Sent"
+  | "Assigned"
+  | "Needs clarification"
+  | "Unfilled"
   | "Accepted"
   | "Declined"
   | "No response"
   | "Completed"
   | "Cancelled";
+
+export type RecipientResponseStatus =
+  | "Pending"
+  | "Accepted"
+  | "Declined"
+  | "Question received"
+  | "No response"
+  | "Covered by another person";
+
+export interface RecipientResponse {
+  memberId: string;
+  name: string;
+  role: string;
+  status: RecipientResponseStatus;
+  /** Plain-language note, e.g. "Accepted today at 3:18 PM" or "Awaiting response". */
+  note?: string;
+  question?: string;
+  reply?: string;
+}
 
 export interface HelpRequest {
   id: string;
@@ -120,9 +142,14 @@ export interface HelpRequest {
   personId?: string;
   taskId?: string;
   questions?: { id: string; from: string; text: string }[];
+  responses?: RecipientResponse[];
+  /** When true, more than one person may accept. */
+  allowMultiple?: boolean;
 }
 
 export type TaskKind = "Caregiving" | "Personal";
+
+export type TaskStatus = "To do" | "In progress" | "Delegated" | "Complete";
 
 export type CapacityBucket =
   | "Not sorted yet"
@@ -138,6 +165,7 @@ export interface Task {
   due?: string;
   notes?: string;
   bucket: CapacityBucket;
+  status?: TaskStatus;
   done: boolean;
   createdAt: string;
 }

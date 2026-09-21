@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Accordion, Button, Card, Chip, Empty, Field, Input, SectionTitle, Tag, Textarea } from "@/components/ui";
+import { Accordion, Button, Card, Chip, Empty, Field, Input, SectionTitle, Tabs, Tag, Textarea } from "@/components/ui";
 import { useStore } from "@/lib/store";
 import { SUPPORT_TYPES, today, uid } from "@/lib/demo-data";
-import type { Capacity, CapacityBucket, Task, TaskKind } from "@/lib/types";
+import type { Capacity, CapacityBucket, Task, TaskKind, TaskStatus } from "@/lib/types";
 
 export const Route = createFileRoute("/check-in")({
   validateSearch: (search: Record<string, unknown>) => {
@@ -135,35 +135,41 @@ function FamilyCheckInPage() {
   const [taskForm, setTaskForm] = useState<{
     id?: string;
     title: string;
-    kind: TaskKind;
+    kind: TaskKind | "";
     personId: string;
     due: string;
     notes: string;
-  }>({ title: "", kind: "Caregiving", personId: "", due: "", notes: "" });
+  }>({ title: "", kind: "", personId: "", due: "", notes: "" });
   const [showTaskForm, setShowTaskForm] = useState(false);
+  const [taskTab, setTaskTab] = useState<TaskKind>("Personal");
 
   const resetTaskForm = () => {
-    setTaskForm({ title: "", kind: "Caregiving", personId: "", due: "", notes: "" });
+    setTaskForm({ title: "", kind: "", personId: "", due: "", notes: "" });
     setShowTaskForm(false);
   };
 
   const saveTask = () => {
-    if (!taskForm.title.trim()) return;
+    if (!taskForm.title.trim() || !taskForm.kind) return;
     const base: Task = {
       id: taskForm.id ?? uid(),
       title: taskForm.title.trim(),
       kind: taskForm.kind,
       bucket: "Not sorted yet",
+      status: "To do",
       done: false,
       createdAt: today(),
-      ...(taskForm.personId ? { personId: taskForm.personId } : {}),
+      ...(taskForm.kind === "Caregiving" && taskForm.personId ? { personId: taskForm.personId } : {}),
       ...(taskForm.due ? { due: taskForm.due } : {}),
       ...(taskForm.notes.trim() ? { notes: taskForm.notes.trim() } : {}),
     };
     setState((s) => ({
       ...s,
       tasks: s.tasks.some((t) => t.id === base.id)
-        ? s.tasks.map((t) => (t.id === base.id ? { ...base, bucket: t.bucket, done: t.done } : t))
+        ? s.tasks.map((t) =>
+            t.id === base.id
+              ? { ...base, bucket: t.bucket, done: t.done, ...(t.status ? { status: t.status } : {}) }
+              : t,
+          )
         : [base, ...s.tasks],
     }));
     resetTaskForm();
@@ -272,6 +278,107 @@ function FamilyCheckInPage() {
           View check-in history
         </Button>
       </header>
+
+      {/* ============ My tasks ============ */}
+      <Card className="space-y-4">
+        <SectionTitle title="My tasks" subtitle="See what you are carrying for yourself and for others." />
+        <Tabs
+          tabs={[
+            `Personal Tasks (${state.tasks.filter((t) => t.kind === "Personal").length})`,
+            `Caregiving Tasks (${state.tasks.filter((t) => t.kind === "Caregiving").length})`,
+          ]}
+          active={
+            taskTab === "Personal"
+              ? `Personal Tasks (${state.tasks.filter((t) => t.kind === "Personal").length})`
+              : `Caregiving Tasks (${state.tasks.filter((t) => t.kind === "Caregiving").length})`
+          }
+          onChange={(next) => setTaskTab(next.startsWith("Personal") ? "Personal" : "Caregiving")}
+        />
+        <p className="text-sm text-muted-foreground">
+          {taskTab === "Personal"
+            ? "Personal tasks stay private. They are never shared with your Care Circle."
+            : "A caregiving task is shared only when you choose to send it as a request."}
+        </p>
+        <ul className="space-y-3">
+          {state.tasks
+            .filter((t) => t.kind === taskTab)
+            .map((t) => {
+              const status = t.done ? "Complete" : (t.status ?? "To do");
+              const options: TaskStatus[] =
+                taskTab === "Personal"
+                  ? ["To do", "In progress", "Complete"]
+                  : ["To do", "Delegated", "Complete"];
+              return (
+                <li key={t.id} className="rounded-2xl border border-border p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Tag tone={t.kind === "Personal" ? "sage" : "warm"}>{t.kind}</Tag>
+                    {t.personId ? <Tag>{personName(t.personId)}</Tag> : null}
+                    <Tag tone={status === "Complete" ? "sage" : "muted"}>{status}</Tag>
+                  </div>
+                  <p className={`mt-2 text-lg ${t.done ? "line-through opacity-70" : ""}`}>{t.title}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {options
+                      .filter((option) => option !== status)
+                      .map((option) => (
+                        <Chip
+                          key={option}
+                          onClick={() =>
+                            patchTask(t.id, { status: option, done: option === "Complete" })
+                          }
+                          className="px-3 py-1.5 text-sm"
+                        >
+                          {option === "Complete" ? "Mark complete" : `Move to “${option}”`}
+                        </Chip>
+                      ))}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Button
+                      variant="ghost"
+                      className="px-3 py-2 text-sm"
+                      onClick={() => {
+                        setTaskForm({
+                          id: t.id,
+                          title: t.title,
+                          kind: t.kind,
+                          personId: t.personId ?? "",
+                          due: t.due ?? "",
+                          notes: t.notes ?? "",
+                        });
+                        setShowTaskForm(true);
+                        setOpen("plate");
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button variant="ghost" className="px-3 py-2 text-sm" onClick={() => removeTask(t.id)}>
+                      Delete
+                    </Button>
+                    {taskTab === "Caregiving" ? (
+                      <Button
+                        variant="quiet"
+                        className="px-3 py-2 text-sm"
+                        onClick={() => {
+                          setBucket(t, "I may need help");
+                          setPicked([t.id]);
+                          setDelegateAction("circle");
+                          setOpen("delegate");
+                        }}
+                      >
+                        Send as a request
+                      </Button>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
+          {state.tasks.filter((t) => t.kind === taskTab).length === 0 ? (
+            <li>
+              <Empty title="Nothing here yet" body="Add an item under “What is on my plate?”" />
+            </li>
+          ) : null}
+        </ul>
+      </Card>
+
 
       {/* ============ 1. How am I doing ============ */}
       <Accordion
@@ -473,28 +580,31 @@ function FamilyCheckInPage() {
               </Field>
               <fieldset>
                 <legend className="text-base font-medium">Is this personal or caregiving?</legend>
+                <p className="mt-0.5 text-sm text-muted-foreground">Choose one to save this item.</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {(["Caregiving", "Personal"] as TaskKind[]).map((k) => (
+                  {(["Personal", "Caregiving"] as TaskKind[]).map((k) => (
                     <Chip key={k} selected={taskForm.kind === k} onClick={() => setTaskForm({ ...taskForm, kind: k })}>
                       {k}
                     </Chip>
                   ))}
                 </div>
               </fieldset>
-              <Field label="Who is this connected to?" hint="Optional.">
-                <select
-                  value={taskForm.personId}
-                  onChange={(e) => setTaskForm({ ...taskForm, personId: e.target.value })}
-                  className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-base text-foreground"
-                >
-                  <option value="">No one in particular</option>
-                  {state.people.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.preferredName || p.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+              {taskForm.kind === "Caregiving" ? (
+                <Field label="Who is this task about?" hint="Optional.">
+                  <select
+                    value={taskForm.personId}
+                    onChange={(e) => setTaskForm({ ...taskForm, personId: e.target.value })}
+                    className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-base text-foreground"
+                  >
+                    <option value="">No one in particular</option>
+                    {state.people.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.preferredName || p.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              ) : null}
               <Field label="Due date" hint="Optional.">
                 <Input type="date" value={taskForm.due} onChange={(e) => setTaskForm({ ...taskForm, due: e.target.value })} />
               </Field>
@@ -505,7 +615,7 @@ function FamilyCheckInPage() {
                 <Button variant="quiet" onClick={resetTaskForm}>
                   Cancel
                 </Button>
-                <Button disabled={!taskForm.title.trim()} onClick={saveTask}>
+                <Button disabled={!taskForm.title.trim() || !taskForm.kind} onClick={saveTask}>
                   Save item
                 </Button>
               </div>
